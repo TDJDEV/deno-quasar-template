@@ -1,4 +1,4 @@
-# Vite + Deno + Vue
+# Vite + Deno + Vue + Quasar
 
 ## Running
 
