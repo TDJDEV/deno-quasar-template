@@ -3,7 +3,9 @@ import vue from "npm:@vitejs/plugin-vue";
 import { quasar, transformAssetUrls } from "npm:@quasar/vite-plugin";
 
 import "npm:vue";
+import "npm:vue-router";
 import "npm:quasar";
+import "npm:@quasar/extras";
 
 // https://vitejs.dev/config/
 export default defineConfig({
