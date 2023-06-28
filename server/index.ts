@@ -36,7 +36,7 @@ const router = new Router();
 router.get("/:path/:ressource?/:id?", async (ctx) => {
   const res = routeBool[ctx.params.path === "api"]()
   console.log(res)
-  Object.entries(res).forEach(([key,val])=>ctx.response[key] = await val);
+  Object.entries(res).forEach(async([key,val])=>ctx.response[key] = await val);
   console.log(ctx.response)
 });
 
