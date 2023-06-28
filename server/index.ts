@@ -4,7 +4,7 @@ const
   app = new Application(),
   routeBool = {
     true(resource, target){ return {body: { time: new Date().toISOString() }}  },
-    async false(){ return {body: await ctx.send({ path: `${Deno.cwd()}/dist/index.html`}), type: "text/html"}  }
+    async false(ctx){ return {body: await ctx.send({ path: `${Deno.cwd()}/dist/index.html`}), type: "text/html"}  }
   };
 
 // First we try to serve static files from the _site folder. If that fails, we
@@ -24,7 +24,7 @@ const router = new Router();
 
 // The /api/time endpoint returns the current time in ISO format.
 router.get("/:path/:ressource?/:id?", async (ctx) => {
-  const res = await routeBool[ctx.params.path === "api"]()
+  const res = await routeBool[ctx.params.path === "api"](ctx)
   console.log(res)
   Object.entries(res).forEach(async([key,val])=>{
     ctx.response[key] = val
