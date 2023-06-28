@@ -32,6 +32,10 @@ router.get("/api", (ctx) => {
   ctx.response.body = { time: new Date().toISOString() };
 });
 
+router.get("*", (ctx) => {
+  ctx.send(${Deno.cwd()}/dist/index.html`) };
+});
+
 // After creating the router, we can add it to the app.
 app.use(router.routes());
 app.use(router.allowedMethods());
