@@ -28,7 +28,7 @@ app.use(async (ctx, next) => {
 const router = new Router();
 
 // The /api/time endpoint returns the current time in ISO format.
-router.get("/api/", (ctx) => {
+router.get("/api", (ctx) => {
   ctx.response.body = { time: new Date().toISOString() };
 });
 
