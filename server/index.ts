@@ -1,7 +1,6 @@
 import express from "https://esm.sh/express?target=denonext";
 const app = express();
-app.use(express.static('/dist'))
-app.use(express.static('/public'))
+app.use(express.static(current+'/dist'))
 const current = Deno.cwd();
 console.log(current);
 app.get("/api", (req, res) => {
