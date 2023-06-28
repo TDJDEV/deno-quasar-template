@@ -22,7 +22,11 @@ const router = new Router();
 
 // The /api/time endpoint returns the current time in ISO format.
 router.get("/:path/:ressource?/:id?", async (ctx) => {
-  ctx.response.body = await ctx.params.path === "api" ? api() : ctx.send({Path: root+'/index.html'})
+  ctx.response.body = await ctx.params.path === "api" ? api() : ctx.send({
+      root,
+      index: "index.html",
+      path: '/index.html'
+  })
   console.log(ctx.response.body)
 });
 
