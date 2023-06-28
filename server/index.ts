@@ -34,7 +34,8 @@ const router = new Router();
 
 // The /api/time endpoint returns the current time in ISO format.
 router.get("/:path/:ressource?/:id?", async (ctx) => {
-  Object.assign(ctx.response.body, await routeBool[ctx.params.path === "api"]()); 
+  const res = await routeBool[ctx.params.path === "api"]()
+  Object.assign(ctx.response.body, res); 
 });
 
 // After creating the router, we can add it to the app.
