@@ -1,9 +1,9 @@
 import { Application, Router } from "https://deno.land/x/oak@v10.2.0/mod.ts";
 // import { Application, Router } from "https://deno.land/x/abc@v1.3.3/mod.ts";
+function api(resource, target){ return {time: new Date().toISOString()} };
 const
   app = new Application(),
-  root = `${Deno.cwd()}/dist`
-  api = function(resource, target){ return {time: new Date().toISOString()} };
+  root = `${Deno.cwd()}/dist`;
 
 // First we try to serve static files from the _site folder. If that fails, we
 // fall through to the router below.
