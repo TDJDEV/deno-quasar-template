@@ -26,5 +26,5 @@ jobs:
         with:
           project: "near-ant-35"
 #           entrypoint: "https://deno.land/std@0.188.0/http/file_server.ts" # 📝 Update the entrypoint
-          entrypoint: "/server/index.ts" # 📝 Update the entrypoint
-          root: "dist"
+          entrypoint: "server/index.ts" # 📝 Update the entrypoint
+          root: ""
