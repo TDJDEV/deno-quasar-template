@@ -2,7 +2,7 @@ import express from "https://esm.sh/express?target=denonext";
 const app = express();
 const current = Deno.cwd();
 function api(resource, target){ return { time: new Date().toISOString() } }
-app.use(express.static(current+'/dist'))
+app.use(express.static(current+'/dist/'))
 console.log(current);
 // app.get("/:path/:ressource?/:id?", (req, res) => {
 //   req.params.path === "api" ? res.send(api()) : res.sendFile(current+'/dist/index.html');
