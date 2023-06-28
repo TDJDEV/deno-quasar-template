@@ -33,7 +33,7 @@ router.get("/api", (ctx) => {
 });
 
 router.get("*", (ctx) => {
-  ctx.send(${Deno.cwd()}/dist/index.html`) };
+  ctx.send(${Deno.cwd()}/dist/index.html`) });
 });
 
 // After creating the router, we can add it to the app.
