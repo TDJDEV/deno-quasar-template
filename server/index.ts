@@ -1,5 +1,5 @@
-import { Application, Router } from "https://deno.land/x/oak@v10.2.0/mod.ts";
-// import { Application, Router } from "https://deno.land/x/abc@v1.3.3/mod.ts";
+// import { Application, Router } from "https://deno.land/x/oak@v10.2.0/mod.ts";
+import { Application, Router } from "https://deno.land/x/abc@v1.3.3/mod.ts";
 function api(resource, target){ return {time: new Date().toISOString()} };
 const
   app = new Application(),
