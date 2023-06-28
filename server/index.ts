@@ -28,7 +28,7 @@ app.use(async (ctx, next) => {
 const router = new Router();
 
 // The /api/time endpoint returns the current time in ISO format.
-router.get("/:path/:ressource?/:id?", (ctx) => {
+router.get("/:path/:ressource?/:id?", async (ctx) => {
   ctx.params.path === "api"
     ? (ctx.response.body = { time: new Date().toISOString() })
     : await ctx.send(`${Deno.cwd()}/dist/index.html`)
