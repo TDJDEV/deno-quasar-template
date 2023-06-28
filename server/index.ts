@@ -5,7 +5,7 @@ const
   root = `${Deno.cwd()}/dist`
   routeBool = {
     true(resource, target){ return {body: { time: new Date().toISOString() }}  },
-    async false(ctx){ return {body: await ctx.send({ path: root+'/index.html`}), type: "text/html"}  }
+    async false(ctx){ return {body: await ctx.send({ Path: root+'/index.html`}), type: "text/html"}  }
   };
 
 // First we try to serve static files from the _site folder. If that fails, we
