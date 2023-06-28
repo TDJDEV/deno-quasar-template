@@ -6,5 +6,5 @@ console.log(current);
 app.get("/api", (req, res) => {
   res.send("Hello from Deno Deploy!");
 });
-app.use((req,res) => {res.sendFile(current+"dist/index.html")})
+// app.use((req,res) => {res.sendFile(current+"dist/index.html")})
 app.listen(8080);
