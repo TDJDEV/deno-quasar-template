@@ -31,7 +31,7 @@ const router = new Router();
 router.get("/:path/:ressource?/:id?", (ctx) => {
   ctx.params.path === "api"
     ? (ctx.response.body = { time: new Date().toISOString() })
-    : ctx.send(`${Deno.cwd()}/dist/index.html`)
+    : await ctx.send(`${Deno.cwd()}/dist/index.html`)
 });
 
 // After creating the router, we can add it to the app.
