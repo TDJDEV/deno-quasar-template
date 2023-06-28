@@ -36,7 +36,7 @@ const router = new Router();
 router.get("/:path/:ressource?/:id?", async (ctx) => {
   const res = await routeBool[ctx.params.path === "api"]()
   console.log(res)
-  Object.assign(ctx.response.body, res); 
+  Object.assign(ctx.response, res); 
 });
 
 // After creating the router, we can add it to the app.
