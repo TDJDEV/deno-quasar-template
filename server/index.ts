@@ -14,7 +14,7 @@ const
   app = new Application(),
   routeBool = {
     true(resource, target){ return {body: { time: new Date().toISOString() }}  },
-    async false(){ return {body: await Deno.readFile(`${Deno.cwd()}/dist/index.html`), type: "text/html"}  }
+    async false(){ return {body: await Deno.readTextFile(`${Deno.cwd()}/dist/index.html`), type: "text/html"}  }
   };
 
 // First we try to serve static files from the _site folder. If that fails, we
