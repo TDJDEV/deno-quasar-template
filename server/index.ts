@@ -36,8 +36,10 @@ const router = new Router();
 router.get("/:path/:ressource?/:id?", async (ctx) => {
   const res = routeBool[ctx.params.path === "api"]()
   console.log(res)
-  Object.entries(res).forEach(async([key,val])=>ctx.response[key] = await val);
-  console.log(ctx.response)
+  Object.entries(res).forEach(async([key,val])=>{
+    ctx.response[key] = await val
+  console.log(key, ' => ',ctx.response[key])
+  });
 });
 
 // After creating the router, we can add it to the app.
