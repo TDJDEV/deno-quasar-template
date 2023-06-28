@@ -3,10 +3,7 @@ import { Application, Router } from "https://deno.land/x/oak@v10.2.0/mod.ts";
 const
   app = new Application(),
   root = `${Deno.cwd()}/dist`
-  routeBool = {
-    true(resource, target){ return {body: { time: new Date().toISOString() }}  },
-    async false(ctx){ return {body: await ctx.send({ Path: root+'/index.html`}), type: "text/html"}  }
-  };
+  api = function(resource, target){ return {time: new Date().toISOString()} };
 
 // First we try to serve static files from the _site folder. If that fails, we
 // fall through to the router below.
@@ -25,11 +22,7 @@ const router = new Router();
 
 // The /api/time endpoint returns the current time in ISO format.
 router.get("/:path/:ressource?/:id?", async (ctx) => {
-  const res = await routeBool[ctx.params.path === "api"](ctx)
-  console.log(res)
-  Object.entries(res).forEach(async([key,val])=>{
-    ctx.response[key] = val
-    console.log(key, ' => ',ctx.response[key])
+  ctx.response.body = await ctx.params.path === "api" ? api() : ctx.file(root+'/index.html')
   });
 });
 
