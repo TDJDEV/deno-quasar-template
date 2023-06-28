@@ -4,9 +4,9 @@ const current = Deno.cwd();
 function api(resource, target){ return { time: new Date().toISOString() } }
 app.use(express.static(current+'/dist'))
 console.log(current);
-app.get("/:path/:ressource?/:id?", (req, res) => {
-  req.params.path === "api" ? res.send(api()) : res.sendFile(current+'/dist/index.html');
-});
+// app.get("/:path/:ressource?/:id?", (req, res) => {
+//   req.params.path === "api" ? res.send(api()) : res.sendFile(current+'/dist/index.html');
+// });
 app.listen(8080);
 
 // import { Application, Router } from "https://deno.land/x/oak@v10.2.0/mod.ts";
