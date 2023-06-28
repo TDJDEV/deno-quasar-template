@@ -2,9 +2,10 @@ import { Application, Router } from "https://deno.land/x/oak@v10.2.0/mod.ts";
 // import { Application, Router } from "https://deno.land/x/abc@v1.3.3/mod.ts";
 const
   app = new Application(),
+  root = `${Deno.cwd()}/dist`
   routeBool = {
     true(resource, target){ return {body: { time: new Date().toISOString() }}  },
-    async false(ctx){ return {body: await ctx.send({ path: `${Deno.cwd()}/dist/index.html`}), type: "text/html"}  }
+    async false(ctx){ return {body: await ctx.send({ path: root+'/index.html`}), type: "text/html"}  }
   };
 
 // First we try to serve static files from the _site folder. If that fails, we
@@ -12,7 +13,7 @@ const
 app.use(async (ctx, next) => {
   try {
     await ctx.send({
-      root: `${Deno.cwd()}/dist`,
+      root,
       index: "index.html",
     });
   } catch {
