@@ -5,7 +5,7 @@ import { Application, Router } from "https://deno.land/x/oak@v10.2.0/mod.ts";
 function logs(ctx){ console.log(ctx.request) };
 function createRecord(collection,id){ return collection.set(id,{ id, collection:key, createAt:new Date().toISOString()}) };
 function updateRecord(record){ return record && (record.updatedAt = new Date().toISOString()) };
-async function setWrapper(fn) { return (...args)=>{ logs(...args), fn(...args)} }
+async function setWrapper(fn) { console.log(fn); return (...args)=>{logs(...args), fn(...args)} }
 
 // Constants
 const
