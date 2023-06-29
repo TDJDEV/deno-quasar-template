@@ -14,7 +14,7 @@ const
   store = {},
   api = {
     create(key:string){ return {msg: createRecord(store[key]||(store[key]=new Map), `${key}-${store[key].lenght}`) ? `new item has been created with id:${key}-${store[key].lenght}`: `error: cannot create new item`} },
-    read(key:string,id:string){ return id ? store[key]?.get(id) : store[key]?.values() },
+    read(key:string,id:string){ return id ? store[key]?.get(id) : store[key]?.values() || {msg: 'not found'} },
     update(key:string,id:string){ return {msg: updateRecord(store[key]?.get(id)) ? `item id:${id} has been updated`: `error: cannot update item id:${id}`} },
     delete(key:string,id:string){ return {msg: store[key]?.delete(id) ? `item id:${id} has been removed`: `error: cannot remove item id:${id}`} }
   };
