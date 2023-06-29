@@ -2,7 +2,8 @@
 import { Application, Router } from "https://deno.land/x/oak@v10.2.0/mod.ts";
 
 // Functions
-// function api(resource, target){ return {time: new Date().toISOString()} };
+function createRecord(collection,id){ return collection.set(id,{ id, collection:key, createAt:new Date().toISOString()}) };
+function updateRecord(record){ return record && record.updatedAt = new Date().toISOString() };
 
 // Constants
 const
@@ -12,9 +13,9 @@ const
   data = await Deno.readFile(root+'/index.html'),
   store = {},
   api = {
-    create(key:string){ return (store[key] || (store[key]=new Map)).set(`${key}-${store[key].lenght}`, { id:`${key}-${store[key].lenght}`, collection:key, time:new Date().toISOString()}) },
+    create(key:string){ return {msg: createRecord(store[key]||(store[key]=new Map), `${key}-${store[key].lenght}`) ? `new item has been created with id:${key}-${store[key].lenght}`: `error: cannot create new item`} },
     read(key:string,id:string){ return id ? store[key]?.get(id) : store[key]?.values() },
-    update(key:string,id:string){ return store[key]?.set(id,{ id, collection:key, time:new Date().toISOString()})},
+    update(key:string,id:string){ return {msg: updateRecord(store[key]?.get(id)) ? `item id:${id} has been updated`: `error: cannot update item id:${id}`} },
     delete(key:string,id:string){ return {msg: store[key]?.delete(id) ? `item id:${id} has been removed`: `error: cannot remove item id:${id}`} }
   };
 
