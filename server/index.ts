@@ -2,7 +2,7 @@
 import { Application, Router } from "https://deno.land/x/oak@v10.2.0/mod.ts";
 
 // Functions
-function api(resource, target){ return {time: new Date().toISOString()} };
+// function api(resource, target){ return {time: new Date().toISOString()} };
 
 // Constants
 const
