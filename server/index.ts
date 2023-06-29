@@ -29,7 +29,7 @@ app.use(async (ctx, next) => {
 
 const router = new Router();
 
-router.get("/api/resources",          async (ctx) => { ctx.response.body = await                              Object.keys(store));
+router.get("/api/resources",          async (ctx) => { ctx.response.body = await                              Object.keys(store)});
 router.post("/api/:resource/",        async (ctx) => { ctx.response.body = await                              api.create(ctx.params.ressource) });
 router.get("/:path/:resource?/:id?",  async (ctx) => { ctx.response.body = await ctx.params.path === "api" ?  api.read(ctx.params.ressource,ctx.params.id) : decoder.decode(data) });
 router.put("/api/:resource/:id",      async (ctx) => { ctx.response.body = await                              api.update(ctx.params.ressource,ctx.params.id) });
