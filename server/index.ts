@@ -3,7 +3,7 @@ import { Application, Router } from "https://deno.land/x/oak@v10.2.0/mod.ts";
 
 // Functions
 function createRecord(collection,id){ return collection.set(id,{ id, collection:key, createAt:new Date().toISOString()}) };
-function updateRecord(record){ return record && record.updatedAt = new Date().toISOString() };
+function updateRecord(record){ return record && (record.updatedAt = new Date().toISOString()) };
 
 // Constants
 const
