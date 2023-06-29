@@ -28,8 +28,9 @@ app.use(async (ctx, next) => {
   catch { next(); }
 });
 
-app.use('api',async (ctx, next) => { console.log(ctx.request), next() });
 const router = new Router();
+
+router.all('/api/*',async (ctx, next) => { console.log(ctx.request), next() });
 
 router.get("/api/resources",          async (ctx) => { ctx.response.body = await                              Object.keys(store)});
 router.post("/api/:resource/",        async (ctx) => { ctx.response.body = await                              api.create(ctx.params.ressource) });
