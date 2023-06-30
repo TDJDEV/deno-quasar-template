@@ -6,10 +6,12 @@ class Collection{
   #__name__
   #__data__
   #__chars__
+  #__i__
   constructor(name){
     this.#__name__ = name
     this.#__data__ = new Map
     this.#__chars__ = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    this.#__i__ = 0
   }
   get name() { return this.#__name__ }
   create(){ return this.#createRecord(this.#__data__, this.#__name__, this.#createUID()) }
@@ -20,7 +22,7 @@ class Collection{
   
   #createRecord(table,collection,id){ return table.set(id,{ id, collection, createAt:new Date().toISOString()}) ? `new item has been created with id:${id}`:`error: cannot create new item` }
   #patchRecord(record){ return record && (record.updatedAt = new Date().toISOString()) };
-  #createUID(){ return ((char,charLen)=>(new Array(8)).reduce((id)=>id+char.charAt(Math.floor(Math.random() * charLen)),""))(this.#__chars__,this.#__chars__.length)}
+  #createUID(){ return ((char,charLen)=>(new Array(7)).reduce((id)=>id+char.charAt(Math.floor(Math.random() * charLen)),this.#__i__))(this.#__chars__,this.#__chars__.length)}
   #toArray(item){ return item && [...item] };
 }
 
