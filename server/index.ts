@@ -24,7 +24,7 @@ class Collection{
   #patchRecord(record){ return record && (record.updatedAt = new Date().toISOString()) };
   #createUID(){ return ((char,charLen)=>(new Array(7)).fill().reduce((id)=>log(id+char.charAt(Math.floor(Math.random() * charLen))),this.#__i__++))(this.#__chars__,this.#__chars__.length) }
   #toArray(item){ return item && [...item] };
-  #filter(data, filters){ return filters ? ((filters)data.filter(record => filters.every(([key,val])=>record[key]==val)))(Object.entries(filters)) : data }
+  #filter(data, filters){ return filters ? ((filters)=>data.filter(record => filters.every(([key,val])=>record[key]==val)))(Object.entries(filters)) : data }
 }
 
 // Functions
