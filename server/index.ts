@@ -15,7 +15,7 @@ class Collection{
   }
   get name() { return this.#__name__ }
   create(){ return this.#createRecord(this.#__data__, this.#__name__, this.#createUID()) }
-  read(id:string)   { return id ? this.#__data__?.get(id) : this.#toArray(this.#__data__?.values()) }
+  read(id:string, filters:any)   { return id ? this.#__data__?.get(id) : this.#filter(this.#toArray(this.#__data__?.values()), filters) }
   update(id:string) { return this.#patchRecord(this.#__data__.get(id)) ? `item id:${id} has been updated`: `error: cannot update item id:${id}`}
   patch(id:string)  { return this.#__data__.get(id) ? `item id:${id} has been patched`: `error: cannot patch item id:${id}` }
   delete(id:string) { return this.#__data__.delete(id) ? `item id:${id} has been removed`: `error: cannot remove item id:${id}`}
@@ -24,6 +24,7 @@ class Collection{
   #patchRecord(record){ return record && (record.updatedAt = new Date().toISOString()) };
   #createUID(){ return ((char,charLen)=>(new Array(7)).fill().reduce((id)=>log(id+char.charAt(Math.floor(Math.random() * charLen))),this.#__i__++))(this.#__chars__,this.#__chars__.length) }
   #toArray(item){ return item && [...item] };
+  #filter(data, filters){ return filters ? ((filters)data.filter(record => filters.every(([key,val])=>record[key]==val)))(Object.entries(filters)) : data }
 }
 
 // Functions
@@ -40,7 +41,7 @@ const
   store = {},
   api = {
     create(key:string)            { return { msg: storeAction(key,'create')} },
-    read(key:string,id:string)    { return        storeAction(key,'read',id) || { msg: 'not found'} },
+    read(key:string,id:string)    { return        storeAction(key,'read',{id}) || { msg: 'not found'} },
     update(key:string,id:string)  { return { msg: storeAction(key,'update',id)} },
     delete(key:string,id:string)  { return { msg: storeAction(key,'delete',id)} }
   };
