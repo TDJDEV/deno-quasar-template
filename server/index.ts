@@ -22,7 +22,7 @@ class Collection{
   
   #createRecord(table,collection,id){ return table.set(id,{ id, collection, createAt:new Date().toISOString()}) ? `new item has been created with id:${id}`:`error: cannot create new item` }
   #patchRecord(record){ return record && (record.updatedAt = new Date().toISOString()) };
-  #createUID(){ return ((char,charLen)=>(new Array(7)).reduce((id)=>id+char.charAt(Math.floor(Math.random() * charLen)),this.#__i__))(this.#__chars__,this.#__chars__.length)}
+  #createUID(){ return ((char,charLen)=>(new Array(7)).reduce((id)=>id+char.charAt(Math.floor(Math.random() * charLen)),this.#__i__++))(this.#__chars__,this.#__chars__.length)}
   #toArray(item){ return item && [...item] };
 }
 
