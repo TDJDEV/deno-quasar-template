@@ -5,11 +5,11 @@ import { Application, Router } from "https://deno.land/x/oak@v10.2.0/mod.ts";
 class Collection{
   #__name__
   #__data__
-  #__i__
+  #__chars__
   constructor(name){
     this.#__name__ = name
     this.#__data__ = new Map
-    this.#__i__ = 0
+    this.#__chars__ = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   }
   get name() { return this.#__name__ }
   create(){ return this.#createRecord(this.#__data__, this.#__name__, this.#createUID()) }
@@ -20,7 +20,7 @@ class Collection{
   
   #createRecord(table,collection,id){ return table.set(id,{ id, collection, createAt:new Date().toISOString()}) ? `new item has been created with id:${id}`:`error: cannot create new item` }
   #patchRecord(record){ return record && (record.updatedAt = new Date().toISOString()) };
-  #createUID(){ return this.#__i__++}
+  #createUID(){ return ((char,charLen)=>(new Array(8)).reduce((id)=>id+char.charAt(Math.floor(Math.random() * charLen)),""))(this.#__chars__,this.#__chars__.length)}
   #toArray(item){ return item && [...item] };
 }
 
