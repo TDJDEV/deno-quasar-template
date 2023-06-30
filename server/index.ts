@@ -10,7 +10,7 @@ class Collection{
     this.#__name__ = name
     this.#__data__ = new Map
   }
-  get name { return this.#__name__ }
+  get name() { return this.#__name__ }
   create(){ return this.#createRecord(this.#__data__, this.#__name__, this.#createUID()) }
   read(id:string)   { return id ? this.#__data__?.get(id) : this.#toArray(this.#__data__?.values()) }
   update(id:string) { return this.#patchRecord(this.#__data__.get(id)) ? `item id:${id} has been updated`: `error: cannot update item id:${id}`}
