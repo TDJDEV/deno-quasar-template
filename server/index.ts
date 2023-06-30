@@ -1,12 +1,31 @@
 // Imports
 import { Application, Router } from "https://deno.land/x/oak@v10.2.0/mod.ts";
 
+// Classes
+class Collection{
+  #__name__
+  #__data__
+  #__i__
+  constructor(name){
+    this.#__name__ = name
+    this.#__data__ = new Map
+  }
+  get name { return this.#__name__ }
+  create(){ return this.#createRecord(this.#__data__, this.#__name__, this.#createUID()) }
+  read(id:string)   { return id ? this.#__data__?.get(id) : this.#toArray(this.#__data__?.values()) }
+  update(id:string) { return this.#patchRecord(this.#__data__.get(id)) ? `item id:${id} has been updated`: `error: cannot update item id:${id}`}
+  patch(id:string)  { return this.#__data__.get(id) ? `item id:${id} has been patched`: `error: cannot patch item id:${id}` }
+  delete(id:string) { return this.#__data__.delete(id) ? `item id:${id} has been removed`: `error: cannot remove item id:${id}`}
+  
+  #createRecord(table,collection,id){ return table.set(id,{ id, collection, createAt:new Date().toISOString()}) ? `new item has been created with id:${id}`:`error: cannot create new item` }
+  #patchRecord(record){ return record && (record.updatedAt = new Date().toISOString()) };
+  #createUID(){ return this.#__i__++}
+  #toArray(item){ return item && [...item] };
+}
+
 // Functions
-function logs(item){ return console.log(item), item };
-function toArray(item){ return item && [...item] };
-function createRecord(table,collection,id){ return table.set(id,{ id, collection, createAt:new Date().toISOString()}) };
-function updateRecord(record){ return record && (record.updatedAt = new Date().toISOString()) };
-async function setWrapper(fn) { console.log(fn); return (ctx, next)=>{logs(ctx, next), fn(ctx, next)} }
+function storeAction(name,action,...args){ return ((collection)=>collection&&collection[action](...args))(getCollection(name, action === "create")) };
+function getCollection(name, create){ return store[name]||(create ? (store[name]=new Collection(name)): null) };
 
 // Constants
 const
@@ -16,10 +35,10 @@ const
   data = await Deno.readFile(root+'/index.html'),
   store = {},
   api = {
-    create(key:string)            { return { msg: createRecord(store[key]||(store[key]=new Map), key, `${key}-${store[key].size}`) ? `new item has been created with id:${key}-${store[key].size}`: `error: cannot create new item`} },
-    read(key:string,id:string)    { return logs(id ? store[key]?.get(id) : toArray(store[key]?.values())) || {msg: 'not found'} },
-    update(key:string,id:string)  { return { msg: updateRecord(store[key]?.get(id)) ? `item id:${id} has been updated`: `error: cannot update item id:${id}`} },
-    delete(key:string,id:string)  { return { msg: store[key]?.delete(id) ? `item id:${id} has been removed`: `error: cannot remove item id:${id}`} }
+    create(key:string)            { return { msg: storeAction(key,'create')} },
+    read(key:string,id:string)    { return        storeAction(key,'read',id) || { msg: 'not found'} },
+    update(key:string,id:string)  { return { msg: storeAction(key,'update',id)} },
+    delete(key:string,id:string)  { return { msg: storeAction(key,'delete',id)} }
   };
 
 // Process
