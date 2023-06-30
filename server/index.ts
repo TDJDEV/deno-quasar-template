@@ -9,6 +9,7 @@ class Collection{
   constructor(name){
     this.#__name__ = name
     this.#__data__ = new Map
+    this.#__i__ = 0
   }
   get name() { return this.#__name__ }
   create(){ return this.#createRecord(this.#__data__, this.#__name__, this.#createUID()) }
