@@ -79,6 +79,7 @@ export class Api extends Store {
     "/" !== path.slice(-1) && (path+="/"); 
 
     // Api routes
+    router.get(`/${path}export`,             async (ctx) => { ctx.response.body = await this.json});
     router.get(`/${path}collections`,        async (ctx) => { ctx.response.body = await this.collections});
     router.post(`/${path}:collection`,       async (ctx) => { ctx.response.body = await this.action(ctx.params.collection,'create') });
     router.get(`/${path}:collection/:id?`,   async (ctx) => { ctx.response.body = await this.action(ctx.params.collection,'read',ctx.params.id) });
@@ -86,6 +87,6 @@ export class Api extends Store {
     router.delete(`/${path}:collection/:id`, async (ctx) => { ctx.response.body = await this.action(ctx.params.collection,'delete',ctx.params.id) });
   }
   
-  get json(){ return JSON.stringify(Object.fromEntries(this.#__collections__.entries().map(([key,val])=>[key,val.read()]))) }
+  get json(){ return JSON.stringify(Object.fromEntries(this.collections.map((key)=>[key,this.action(key,'read')]))) }
   
 }
