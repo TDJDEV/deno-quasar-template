@@ -72,7 +72,7 @@ export class Api extends Store {
   #__store__
   #__collections__
 
-  constructor({router,path:string=""}) {
+  constructor({router,path=""}) {
     super()
 
     // check params
