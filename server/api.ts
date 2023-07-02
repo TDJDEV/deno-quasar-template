@@ -65,7 +65,7 @@ export class Store {
   get collections(){ return [...this.#__collections__.keys()] }
 
   action(name:string, action:string, ...args:any[]){ return ((table:Collection) => table && table[action](...args))(this.#getCollection(name, action === "create")) }
-  #getCollection(name:string, create:boolean){ return ((db:Map)=> (db.has(name)) && db || (create ? db.set(name,new Collection(name)): null) )(this.#__collections__).get(name) }
+  #getCollection(name:string, create:boolean){ return ((db:Map)=> (db.has(name)) && db || (create ? db.set(name,new Collection(name)): null) )(this.#__collections__)?.get(name) }
 }
 
 export class Api extends Store {
