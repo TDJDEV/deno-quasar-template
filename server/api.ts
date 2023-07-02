@@ -70,10 +70,11 @@ export class Store {
 
 export class Api extends Store {
   #__store__
+  #__collections__
 
   constructor({router,path:string=""}) {
     super()
-    
+
     // check params
     "/" !== path.slice(-1) && (path+="/"); 
 
