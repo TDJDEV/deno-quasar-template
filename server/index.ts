@@ -16,7 +16,7 @@ const
   root = `${Deno.cwd()}/dist`,
   decoder = new TextDecoder("utf-8"),
   data = await Deno.readFile(root+'/index.html'),
-  store = new Store,
+  // store = new Store,
   api = {
     create(key:string)            { return { msg: store.action(key,'create')} },
     read(key:string,id:string)    { return        store.action(key,'read',{id}) || { msg: 'not found'} },
