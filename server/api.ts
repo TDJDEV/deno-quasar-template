@@ -80,10 +80,10 @@ export class Api extends Store {
 
     // Api routes
     router.get(`/${path}collections`,        async (ctx) => { ctx.response.body = await store.collections});
-    router.post(`/${path}:collection`,       async (ctx) => { ctx.response.body = await api.create(ctx.params.collection) });
-    router.get(`/${path}:collection/:id?`,   async (ctx) => { ctx.response.body = await api.read(ctx.params.collection,ctx.params.id) });
-    router.put(`/${path}:collection/:id`,    async (ctx) => { ctx.response.body = await api.update(ctx.params.collection,ctx.params.id) });
-    router.delete(`/${path}:collection/:id`, async (ctx) => { ctx.response.body = await api.delete(ctx.params.collection,ctx.params.id) });
+    router.post(`/${path}:collection`,       async (ctx) => { ctx.response.body = await this.action(ctx.params.collection,'create') });
+    router.get(`/${path}:collection/:id?`,   async (ctx) => { ctx.response.body = await this.action(ctx.params.collection,'read',ctx.params.id) });
+    router.put(`/${path}:collection/:id`,    async (ctx) => { ctx.response.body = await this.action(ctx.params.collection,'update',ctx.params.id) });
+    router.delete(`/${path}:collection/:id`, async (ctx) => { ctx.response.body = await this.action(ctx.params.collection,'delete',ctx.params.id) });
   }
   
   get json(){ return JSON.stringify(Object.fromEntries(this.#__collections__.entries().map(([key,val])=>[key,val.read()]))) }
