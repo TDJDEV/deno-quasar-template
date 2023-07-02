@@ -79,7 +79,7 @@ export class Api extends Store {
     "/" !== path.slice(-1) && (path+="/"); 
 
     // Api routes
-    router.get(`/${path}collections`,        async (ctx) => { ctx.response.body = await store.collections});
+    router.get(`/${path}collections`,        async (ctx) => { ctx.response.body = await this.collections});
     router.post(`/${path}:collection`,       async (ctx) => { ctx.response.body = await this.action(ctx.params.collection,'create') });
     router.get(`/${path}:collection/:id?`,   async (ctx) => { ctx.response.body = await this.action(ctx.params.collection,'read',ctx.params.id) });
     router.put(`/${path}:collection/:id`,    async (ctx) => { ctx.response.body = await this.action(ctx.params.collection,'update',ctx.params.id) });
