@@ -38,7 +38,7 @@ class Collection{
 
   constructor(name,data){
     this.#__name__ = name
-    this.#__data__ = new Map
+    this.#__data__ = new Map(data.map(x=>[x.id,x]))
     this.#__chars__ = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     this.#__i__ = 0
   }
@@ -62,7 +62,12 @@ export class Store {
 
   constructor() { this.#__collections__ = new Map }
 
+  // Return collection list
   get collections(){ return [...this.#__collections__.keys()] }
+
+  // Store datas
+  get data() { return Object.fromEntries(this.collections.map((key)=>[key,this.action(key,'read')])) }
+  set data(dataObject:string){ this.#__collections__ = new Map(Object.entries(dataObject).map((collectionData)=>new Collection(...collectionData))) }
 
   action(name:string, action:string, ...args:any[]){ return ((table:Collection) => table && table[action](...args))(this.#getCollection(name, action === "create")) }
   #getCollection(name:string, create:boolean){ return ((db:Map)=> (db.has(name)) && db || (create ? db.set(name,new Collection(name)): null) )(this.#__collections__)?.get(name) }
@@ -70,7 +75,9 @@ export class Store {
 
 export class Api extends Store {
   #__store__
-  #__collections__
+  #__from__
+  #__to__
+  #__dataDummy__
 
   constructor({router,path=""}) {
     super()
@@ -79,14 +86,46 @@ export class Api extends Store {
     "/" !== path.slice(-1) && (path+="/"); 
 
     // Api routes
-    router.get(`/${path}export`,             async (ctx) => { ctx.response.body = await this.json});
-    router.get(`/${path}collections`,        async (ctx) => { ctx.response.body = await this.collections});
+    router.get(`/${path}export`,             async (ctx) => { ctx.response.body = await this.json });         // return db to json
+    router.get(`/${path}collections`,        async (ctx) => { ctx.response.body = await this.collections });  // Return collections list
     router.post(`/${path}:collection`,       async (ctx) => { ctx.response.body = await this.action(ctx.params.collection,'create') });
     router.get(`/${path}:collection/:id?`,   async (ctx) => { ctx.response.body = await this.action(ctx.params.collection,'read',ctx.params.id) });
     router.put(`/${path}:collection/:id`,    async (ctx) => { ctx.response.body = await this.action(ctx.params.collection,'update',ctx.params.id) });
     router.delete(`/${path}:collection/:id`, async (ctx) => { ctx.response.body = await this.action(ctx.params.collection,'delete',ctx.params.id) });
+    
+    // Convert data from Object to selected format
+    this.#__from__={
+      json(data){ return JSON.parse(data) }
+    }
+    
+    // Convert data from Object to selected format
+    this.#__to__={
+      json(data){ return JSON.stringify(data) }
+      // sql(){  }
+    }
   }
   
-  get json(){ return JSON.stringify(Object.fromEntries(this.collections.map((key)=>[key,this.action(key,'read')]))) }
+  
+  /******************
+  * Getters/Setters *
+  ******************/
+  
+  // Import/Export shorthand
+  get json()            { return this.#export('json') }       // To JSON
+  get data()            { return JSON.parse(this.json) }      // To Object
+  // get sql()             { return this.#export('sql') }        // To SQL
+  set json(data:string) { this.#import('json', data) }        // From JSON
+  set data(data:any)    { this.json = JSON.stringify(data) }  // From Object
+  // set sql(data:string)  { this.#import('sql', data) }         // From SQL
+
+  /******************
+  *     Methods     *
+  ******************/
+  // Return an object store data in the passed format if known
+  #impot(format:string, data:unknown)     { super.data = this.#convertData(this.#__from__[format], data) }
+  // Return store data in the passed format if known  
+  #export(format:string)                  { return this.#convertData(this.#__to__[format], super.data) }
+  // Return converted data if the converter exist  
+  #convertData(fn:Function, data:unknown) { return fn?fn(data):"unknown format"  }
   
 }
