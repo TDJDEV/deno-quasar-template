@@ -122,7 +122,7 @@ export class Api extends Store {
   *     Methods     *
   ******************/
   // Return an object store data in the passed format if known
-  #impot(format:string, data:unknown)     { super.data = this.#convertData(this.#__from__[format], data) }
+  #import(format:string, data:unknown)     { super.data = this.#convertData(this.#__from__[format], data) }
   // Return store data in the passed format if known  
   #export(format:string)                  { return this.#convertData(this.#__to__[format], super.data) }
   // Return converted data if the converter exist  
