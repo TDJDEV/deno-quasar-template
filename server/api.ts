@@ -17,6 +17,7 @@ class Record {
     this.#__data__ = { set attributes(val){} }
 		this.#setMeta(data)
 		this.set(data.attributes)
+    console.log(this.#__data__)
   }
 
   // getters
