@@ -62,7 +62,7 @@ class Collection{
   patch(id:string)  { return this.#__data__.get(id)}
   
   #createRecord(collection:string,id:string, attributes:unknown){ return new Record(undefined,{id,collection, attributes})  }
-  #add(record){ return (id=>this.#__data__.set(id, record),id)(record) }
+  #add(record){ return (id=>(this.#__data__.set(id, record),id))(record.id) }
   #patchRecord(record){ return record && (record.updatedAt = new Date().toISOString()) };
   #createUID(){ return ((char,charLen)=>(new Array(7)).fill().reduce((id)=>id+char.charAt(Math.floor(Math.random() * charLen)),this.#__i__++))(this.#__chars__,this.#__chars__.length) }
   #toArray(item){ return item && [...item] };
