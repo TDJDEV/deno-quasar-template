@@ -56,11 +56,16 @@ class Collection{
   }
 
   get name() { return this.#__name__ }
-  create(data:unknown){ return ((id:string)=>this.#add(this.#createRecord(this.#__name__, id, data)) )(this.#createUID()) }
-  read(id:string, filters:any)   { return id ? this.#__data__?.get(id) : this.#filter(this.#toArray(this.#__data__?.values()), filters) }
-  update(id:string) { return this.#__data__.get(id)?.set(data)}
-  delete(id:string) { return this.#__data__.delete(id)}
-  patch(id:string)  { return this.#__data__.get(id)}
+
+  /******************
+  *     Methods     *
+  ******************/
+
+  create(data:unknown)            { return ((id:string)=>this.#add(this.#createRecord(this.#__name__, id, data)) )(this.#createUID()) }
+  read(id:string, filters:any)    { return id ? this.#__data__?.get(id) : this.#filter(this.#toArray(this.#__data__?.values()), filters) }
+  update(id:string,data:unknown)  { return this.#__data__.get(id)?.set(data)}
+  delete(id:string)               { return this.#__data__.delete(id)}
+  patch(id:string)                { return this.#__data__.get(id)}
   
   #createRecord(collection:string,id:string, attributes:unknown){ return new Record(undefined,{id,collection, attributes})  }
   #add(record){ return (id=>(this.#__data__.set(id, record),id))(record.id) }
@@ -75,12 +80,19 @@ export class Store {
 
   constructor() { this.#__collections__ = new Map }
 
+  /******************
+  * Getters/Setters *
+  ******************/
   // Return collection list
   get collections(){ return [...this.#__collections__.keys()] }
 
   // Store datas
   get data() { return Object.fromEntries(this.collections.map((key)=>[key,this.#action(key,'read')])) }
   set data(dataObject:string){ this.#__collections__ = new Map(Object.entries(dataObject).map((collectionData)=>new Collection(...collectionData))) }
+
+  /******************
+  *     Methods     *
+  ******************/
 
   action(name:string, action:string, ...args:any[]){ return this.#action(name, action, args) }
   #action(name:string, action:string, args:any[]){ return ((table:Collection) => table && table[action](...args))(this.#getCollection(name, action === "create")) }
