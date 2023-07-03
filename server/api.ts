@@ -79,7 +79,7 @@ export class Store {
   get collections(){ return [...this.#__collections__.keys()] }
 
   // Store datas
-  get data() { return Object.fromEntries(this.collections.map((key)=>[key,this.action(key,'read')])) }
+  get data() { return Object.fromEntries(this.collections.map((key)=>[key,this.#action(key,'read')])) }
   set data(dataObject:string){ this.#__collections__ = new Map(Object.entries(dataObject).map((collectionData)=>new Collection(...collectionData))) }
 
   action(name:string, action:string, ...args:any[]){ return this.#action(name, action, args) }
