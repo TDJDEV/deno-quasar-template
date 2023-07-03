@@ -138,7 +138,7 @@ export class Api extends Store {
   *     Methods     *
   ******************/
   //request handler
-  action(action:string, name:string, ...args:any[]) { return Object.keys(this.#__fn__).includes(action) ? this.#__fn__[action] : this.#actionLog(super.action(name,action,...args)) }
+  action(action:string, name:string, ...args:any[]) { return Object.keys(this.#__fn__).includes(action) ? this.#__fn__[action] : this.#actionLog(super.action(name,action,...args),action) }
   // Return an object store data in the passed format if known
   #import(format:string, data:unknown)     { super.data = this.#convertData(this.#__from__[format], data) }
   // Return store data in the passed format if known  
