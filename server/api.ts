@@ -82,7 +82,8 @@ export class Store {
   get data() { return Object.fromEntries(this.collections.map((key)=>[key,this.action(key,'read')])) }
   set data(dataObject:string){ this.#__collections__ = new Map(Object.entries(dataObject).map((collectionData)=>new Collection(...collectionData))) }
 
-  action(name:string, action:string, ...args:any[]){ return ((table:Collection) => table && table[action](...args))(this.#getCollection(name, action === "create")) }
+  action(name:string, action:string, ...args:any[]){ return this.#action(name, action, args) }
+  #action(name:string, action:string, args:any[]){ return ((table:Collection) => table && table[action](...args))(this.#getCollection(name, action === "create")) }
   #getCollection(name:string, create:boolean){ return ((db:Map)=> (db.has(name)) && db || (create ? db.set(name,new Collection(name)): null) )(this.#__collections__)?.get(name) }
 }
 
