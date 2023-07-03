@@ -138,7 +138,7 @@ export class Api extends Store {
   *     Methods     *
   ******************/
   //request handler
-  action(action:string, name:string, ...args:any[]) { return Object.keys(this.#__fn__).includes(action) ? this.#__fn__[action] : super.action(name,action,...args) }
+  action(action:string, name:string, ...args:any[]) { return Object.keys(this.#__fn__).includes(action) ? this.#__fn__[action] : this.#actionLog(super.action(name,action,...args)) }
   // Return an object store data in the passed format if known
   #import(format:string, data:unknown)     { super.data = this.#convertData(this.#__from__[format], data) }
   // Return store data in the passed format if known  
@@ -147,7 +147,7 @@ export class Api extends Store {
   #convertData(fn:Function, data:unknown) { return fn?fn(data):"unknown format"  }
   // msg generator
   #actionLog(res:unknown,action:string, id:string){ return (res ? this.#successMsg : this.#errorMsg)(action, id,res) }
-  #successMsg(action:string, id:string, res:unknown) { return action=='read' ? res : `Item id:${id} has been ${action}d` }
-  #errorMsg(action:string, id:string) { return `Error => cannot ${action} item${id ? ' id:'+id : ''}` }
+  #successMsg(action:string, id:string, res:unknown) { return action=='read' ? res : {msg: `Item id:${id} has been ${action}d`} }
+  #errorMsg(action:string, id:string) { return {error: `cannot ${action} item${id ? ' id:'+id : ''}`} }
   
 }
