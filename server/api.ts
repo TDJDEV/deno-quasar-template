@@ -62,7 +62,7 @@ class Collection{
   patch(id:string)  { return this.#__data__.get(id)}
   
   #createRecord(collection:string,id:string, attributes:unknown){ return new Record(undefined,{id,collection, attributes})  }
-  #add(record){ return this.#__data__.set(record.id, record) }
+  #add(record){ return (id=>this.#__data__.set(id, record),id)(record) }
   #patchRecord(record){ return record && (record.updatedAt = new Date().toISOString()) };
   #createUID(){ return ((char,charLen)=>(new Array(7)).fill().reduce((id)=>id+char.charAt(Math.floor(Math.random() * charLen)),this.#__i__++))(this.#__chars__,this.#__chars__.length) }
   #toArray(item){ return item && [...item] };
@@ -147,7 +147,7 @@ export class Api extends Store {
   #convertData(fn:Function, data:unknown) { return fn?fn(data):"unknown format"  }
   // msg generator
   #actionLog(res:unknown,action:string, id:string){ return (res ? this.#successMsg : this.#errorMsg)(action, id,res) }
-  #successMsg(action:string, id:string, res:unknown) { return action=='read' ? res : {msg: `Item id:${id} has been ${action}d`} }
+  #successMsg(action:string, id:string, res:unknown) { return action=='read' ? res : {msg: `Item id:${id || res} has been ${action}d`} }
   #errorMsg(action:string, id:string) { return {error: action=='read' ? undefined :`cannot ${action} item${id ? ' id:'+id : ''}`} }
   
 }
