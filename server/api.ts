@@ -38,7 +38,7 @@ class Collection{
 
   constructor(name,data){
     this.#__name__ = name
-    this.#__data__ = new Map(data.map(x=>[x.id,x]))
+    this.#__data__ = new Map(data?.map(x=>[x.id,x]))
     this.#__chars__ = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     this.#__i__ = 0
   }
