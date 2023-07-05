@@ -1,11 +1,34 @@
-// 
+class DataMap extends Map {
+  #dataMaps
+  constructor(parameters) {
+    super(parameters)
+    this.#dataMaps=new Set([])
+  }
+
+  on(){}
+  off(){}
+  attach(dataMap:DataMap):this { if(dataMap.isAttached(this) || dataMap === this) throw 'circular reference detected'; else return this.#dataMaps.add(dataMap), this; }
+  isAttached(dataMap:DataMap):boolean { return this.#dataMaps.has(dataMap) || [...this.#dataMaps].some(deepDataMap=>deepDataMap.isAttached(dataMap)) }
+
+  set(key:any,value:any):this { if(this.#deepHas(key)) throw('this key is owned by a parent dataMap'); else return this.#deepSet(key,value) }
+  delete(key:any):boolean { return super.delete(key) && (this.#dataMaps.forEach(dataMap=>dataMap.delete(key)),true) }
+  // check if current or parents map
+  deepHas(key:any):boolean { return super.has(key) || this.#dataMaps.size && [...this.#dataMaps].some(dataMap=>dataMap.deepHas(key)) }
+  // check if only parent map
+  #deepHas(key:any):boolean { return this.#dataMaps.size && !super.has(key) && [...this.#dataMaps].some(dataMap=>dataMap.deepHas(key)) }
+  // check if only parent map
+  #deepSet(key:any,value:any):boolean { return this.#dataMaps.forEach(dataMap=>dataMap.set(key,value)), super.set(key,value) }
+  #attachData(dataMap:DataMap):void { if([...this.keys()].some(key => dataMap.deepHas(key))) throw new Error("duplicate key detected"); else this.forEach((data,key)=>{ dataMap.set(key,data) }) }
+}
+
+// Manage record's data
 class Record {
   #__dataModel__
   #__attrsModel__
   #__meta__
   #__attributes__
 
-  constructor(model={},data={}){
+  constructor(model,data={}){
     this.#__attrsModel__ = model
     this.#__dataModel__ = {
       id:'id',
@@ -45,37 +68,40 @@ class Record {
   // Return a conform attribute structure
   #parse(data:object)                                     { return this.#browse(this.#__attrsModel__,this.#reducer(this.#check,data),{})}
   // Add data to record meta data
-  #addMeta(o:object,[name,label]:string[],data:object)    { return (o[name]=data[label]), o }
+  #addMeta(o:object,[name,label]:string[],data:object)    { return (o[name]=data[label]),o }
   // add authorized attributes
-  #check(o:object,[key,type]:[string,string],data:object) { return ((val:unknown) => this.#checkDataType(val,type) && (o[key]=val))(data[key]), o }
+  #check(o:object,[key,type]:[string,string],data:object) { return ((val:unknown) => this.#checkDataType(val,type) && (o[key]=val))(data[key]),o }
   //Clone data deeply
   #cloneData(data:object)                                 { return JSON.parse(JSON.stringify(data||{})) }
   // Set mutation date
   #setDate(isNew:boolean)                                 { return this.#__meta__[isNew ? 'createdAt' : 'updatedAt'] = new Date().toISOString() }
   // Reduce callback supercharger
-  #reducer(fn:Function, ...datas:unknown[])               { return (acc:any, it:unknown)=>fn(acc, it, ...datas) }
+  #reducer(fn:Function,...datas:unknown[])                { return (acc:any,it:unknown)=>fn(acc,it,...datas) }
   // check attribute data type
   #checkDataType(val,type)                                { return [type,typeof type].includes(typeof val) }
   // check if passed data is an object
-  #isValid(data:object={})                                { return typeof data === "object" && !Array.isArray(data) }
+  #isValid(data:object={}): boolean                       { return typeof data === "object" && !Array.isArray(data) }
   // Browse object and return accumulator if passed
-  #browse(data:object,fn:Function,o:any)                  { return Object.entries(data)[o ? 'reduce' : 'forEach'](fn,o) }
+  #browse(data:object,fn:Function,o:any):any              { return Object.entries(data)[o ? 'reduce' : 'forEach'](fn,o) }
   // Partially update attributes
-  #update(data:object)                                    { return data && Object.assign(this.#__attributes__ ,this.#cloneData(data))}  
+  #update(data:object):boolean                            { return data && !!Object.assign(this.#__attributes__ ,this.#cloneData(data))}  
 
   // Set JSONable structure
   toJSON(){ return Object.values(this.#__dataModel__).reduce((acc,key) => ((acc[key]=this[key]),acc),{})  }
 }
 
+// Manage records and define it's data structure 
 class Collection{
   #__name__
-  #__meta__
+  #__dataModel__
+  #__data__
   #__chars__
   #__i__
 
-  constructor(name,data){
+  constructor(name,model,data){
     this.#__name__ = name
-    this.#__meta__ = new Map(data?.map(x=>[x.id,x]))
+    this.#__dataModel__ = this.model || (Array.isArray(data)?data:[]).reduce(()=>"",{})
+    this.#__data__ = new Map(data?.map(x=>[x.id,new Record(x)]))
     this.#__chars__ = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     this.#__i__ = 0
   }
@@ -89,36 +115,33 @@ class Collection{
   /* public */
 
   // crud
-  create(data:unknown)            { return ((id:string)=>this.#add(this.#createRecord(this.#__name__, id, data)) )(this.#createUID()) }
-  read(id:string, filters:any)    { return id ? this.#__meta__?.get(id) : this.#filterHandler(this.#toArray(this.#__meta__?.values()), filters) }
-  update(id:string,data:unknown)  { return this.#__meta__.get(id)?.set(data)}
-  delete(id:string)               { return this.#__meta__.delete(id)}
-  patch(id:string)                { return this.#__meta__.get(id)}
+  create(data:unknown)            { return ((id:string)=>this.#add(this.#createRecord(this.#__name__,id,data)) )(crypto.randomUUID()) }
+  read(id:string,filters:any)    { return id ? this.#__data__?.get(id) : this.#filterHandler(this.#toArray(this.#__data__?.values()),filters) }
+  update(id:string,data:unknown)  { return this.#__data__.get(id)?.set(data)}
+  delete(id:string)               { return this.#__data__.delete(id)}
+  patch(id:string,data:unknown)   { return this.#__data__.get(id)?.update(data)}
   
   /* private */
 
+  // Define collection records data model
+  #setDataModel(collection:string,id:string,attributes:unknown)  { return new Record(this.#__dataModel__,{id,collection,attributes})  }
   // Create a record
-  #createRecord(collection:string,id:string, attributes:unknown)  { return new Record(undefined,{id,collection, attributes})  }
+  #createRecord(collection:string,id:string,attributes:unknown)  { return new Record(this.#__dataModel__,{id,collection,attributes})  }
   // Add recorde to collection
-  #add(record:Record)                                             { return (id=>(this.#__meta__.set(id, record),id))(record.id) }
+  #add(record:Record)                                             { return (id=>(this.#__data__.set(id,record),id))(record.id) }
   // Partially update record
-  #patchRecord(record:Record, data:unknown)                       { return record?.update(data) }
-  // Generate an id
-  #createUID()                                                    { return this.#loop(7,(id)=>id+this.#getRandom(this.#__chars__),this.#__i__++) }
-  // Return value from random index 
-  #getRandom(datas:string|[])                                     { return datas && datas[Math.floor(Math.random() * datas.length)] }
+  #patchRecord(record:Record,data:unknown)                       { return record?.update(data) }
   // Convert iterable to array
   #toArray(item:Iterable)                                         { return item && [...item] };
-  // Iterate on the passed method 
-  #loop(n:number,fn:Function,acc:any)                             { return (new Array(n)).fill().reduce(fn,acc)}
   // Return filtered records
-  #filterHandler(data:Record[], filters:{})                       { return filters ? this.#Filter(data,this.#readFilters(filters)) : data }
+  #filterHandler(data:Record[],filters:{})                       { return filters ? this.#Filter(data,this.#readFilters(filters)) : data }
   // Convert filters to iterable
   #readFilters(filters:{})                                        { return Object.entries(filters) }
   // Filter collection records
   #Filter(data:{}[],filters:[][])                                 { return data.filter(record => filters.every(([key,val])=>record[key]==val)) }
 }
 
+// Manage collections
 export class Store {
   #__collections__
 
@@ -130,7 +153,7 @@ export class Store {
   // Return collection list
   get collections()     { return [...this.#__collections__.keys()] }
 
-  // Store datas
+  // Store datas*
   get data()            { return Object.fromEntries(this.collections.map((key)=>[key,this.#action(key,'read')])) }
   set data(dataObject)  { this.#__collections__ = this.#init(dataObject) }
 
@@ -138,60 +161,73 @@ export class Store {
   *     Methods     *
   ******************/
 
+  /* public */
+  
   // Public access to #action
-  action(name:string, action:string, ...args:any[])   { return this.#action(name, action, ...args) }
+  action(name:string,action:string,...args:any[])   { return this.#action(name,action,...args) }
+  // Public access to #get
+  getCollection(name:string)                          { return this.#get(name) }
+  // Public access to #add
+  setCollection(name:string,collection:Collection)   { return this.#add(this.#__collections__,name,collection) }
+
+  /* private */
+
   // Return requested data if found 
-  #action(name:string, action:string, ...args:any[])  { return this.#do(this.#get(name, action === "create"), action, args) }
+  #action(name:string,action:string,...args:any[])  { return this.#do(this.#get(name,action === "create"),action,args) }
   // Return collection or undefined
-  #get(name:string, create:boolean)                   { return this.#addOrFind(this.#__collections__)?.get(name) }
+  #get(name:string,create:boolean)                   { return this.#addOrFind(this.#__collections__,name,create)?.get(name) }
   // Set or replace store data
   #init(data={})                                      { return new Map(Object.entries(data).map((arr)=>this.#create(...arr))) }
   // Create a collection
-  #create(name:string,data:[])                        { return console(`Collection ${name} has been created`), new Collection(name,data) }
+  #create(name:string,data?:[])                       { return console(`Collection ${name} has been created`),new Collection(name,data) }
   // Find a collection or add a new one
-  #addOrFind(db:Map, name:string, create:boolean)     { return this.#find(db) || create ? this.#add(db, name) : null }
+  #addOrFind(db:Map,name:string,create:boolean)     { return this.#find(db) || create ? this.#add(db,name) : null }
   // Add a new collection to store map
-  #add(db:Map, name:string)                           { return db.set(name,this.#create(name)) }
+  #add(db:Map,name:string,collection?:Collection)   { return db.set(name,collection||this.#create(name)) }
   // find a collection
   #find(db:Map)                                       { return db.has(name) && db }
-  // Execute the passed action
-  #do(table:Collection, action, args:any[])           { return table && table[action](...args) }
+  // Execute the passed action*
+  #do(table:Collection,action,args:any[])           { return table && table[action] && table[action](...args) }
 }
 
+// Store additionnal functionnalities (api routes,data import and export,etc...)
 export class Api extends Store {
   #__from__
   #__to__
   #__fn__
 
-  constructor({router,path=""}) {
+  constructor(router:object,path?:string="") {
     super()
 
     // check params
     "/" !== path.slice(-1) && (path+="/"); 
 
     // Api routes
-    router.get(`/${path}export`,             async (ctx) => { ctx.response.body = await this.action('export') });  // return db to json
-    router.get(`/${path}collections`,        async (ctx) => { ctx.response.body = await this.action('list') });    // Return collections list
-    router.post(`/${path}:collection`,       async (ctx) => { ctx.response.body = await this.action('create',ctx.params.collection) });
-    router.get(`/${path}:collection/:id?`,   async (ctx) => { ctx.response.body = await this.action('read',ctx.params.collection,ctx.params.id) });
-    router.put(`/${path}:collection/:id`,    async (ctx) => { ctx.response.body = await this.action('update',ctx.params.collection,ctx.params.id) });
-    router.delete(`/${path}:collection/:id`, async (ctx) => { ctx.response.body = await this.action('delete',ctx.params.collection,ctx.params.id) });
+    router
+      .get(`/${path}export`,              this.#middleware('export')) // Return db data in json string
+      .get(`/${path}collections`,         this.#middleware('list'))   // Return collections list
+      .post(`/${path}:collection`,        this.#middleware('create')) // Create record in a collection
+      .get(`/${path}:collection/:id?`,    this.#middleware('read'))   // Return a record or a list of record (readOne || readMany)
+      .put(`/${path}:collection/:id`,     this.#middleware('update')) // Replace a record data
+      .patch(`/${path}:collection/:id`,   this.#middleware('patch'))  // Replace a record one or more attribute data
+      .delete(`/${path}:collection/:id`,  this.#middleware('delete')) // Delete a record
+      .get(`/${path}/*`,                  async (ctx,next) => { (ctx.response.type = 404) || next }) // 
     
     // Convert data from Object to selected format
     this.#__from__={
-      json(data){ return JSON.parse(data) }
+      json(data):object { return JSON.parse(data) }
     }
     
     // Convert data from Object to selected format
     this.#__to__={
-      json(data){ return JSON.stringify(data) }
+      json(data):string { return JSON.stringify(data) }
       // sql(){  }
     }
 
-    this.#__fn__={
-      list(){ return this.collections },
-      export(){ return this.json }
-    }
+    // Api functionnalities bank
+    this.#__fn__= new Map
+    this.#__fn__.set('list',():string[] => this.collections)
+    this.#__fn__.set('export',():string => this.json)
   }
   
   
@@ -199,35 +235,47 @@ export class Api extends Store {
   * Getters/Setters *
   ******************/
   
-  // Import/Export shorthand
+  // Export to format 
   get json()            { return this.#export('json') }       // To JSON
   get data()            { return JSON.parse(this.json) }      // To Object
   // get sql()             { return this.#export('sql') }        // To SQL
-  set json(data:string) { this.#import('json', data) }        // From JSON
+  
+  // Import from format 
+  set json(data:string) { this.#import('json',data) }        // From JSON
   set data(data:any)    { this.json = JSON.stringify(data) }  // From Object
-  // set sql(data:string)  { this.#import('sql', data) }         // From SQL
+  // set sql(data:string)  { this.#import('sql',data) }         // From SQL
 
   /******************
   *     Methods     *
   ******************/
-  //request handler
-  action(action:string, name:string, ...args:any[])   { return this.#actionLog(this.#handler(action,name)(...args),action,...args) }
+
+  // Set response body
+  async #res(res:object,action:string, params:object):Promise<unknown> { return res.body = await this.#action(action,this.#paramsHandler(action,params)) }
+
+  
+  // Return api requests handler 
+  #middleware(action:string):Promise<void>                  { return async(ctx, next)=>{ await this.#res(ctx.response,action,ctx.params) || next() } }
+  // Return an array of request parameters
+  #paramsHandler(action:string,params:object):unknown[]     { return console.log(params),[params.collection,action==="create"?ctx.params.id:undefined] }
+  // Handle api actions (body response)
+  #action(action:string,name:string,...args:any[]):unknown  { return this.#actionLog(this.#handler(action,name)(...args),action,...args) }
   // Return an object store data in the passed format if known
-  #handler(action:string, name:string)                { return this.#apiAction(action) || this.#storeAction(action, name) }
-  // return api action handler
-  #apiAction(action:string)                           { return Object.keys(this.#__fn__).includes(action) && (()=>this.#__fn__[action]()) }
+  #handler(action:string,name:string):unknown               { return this.#apiAction(action) || this.#storeAction(action,name) }
+  // return api action handler*
+  #apiAction(action:string):unknown                         { return this.#__fn__.has(action) && this.#__fn__.get(action) }
   // return store action handler
-  #storeAction(action:string, name:string)            { return args=>super.action(name,action,...args) }
-  #import(format:string, data:unknown)                { super.data = this.#convertData(this.#__from__[format], data) }
+  #storeAction(action:string,name:string):unknown           { return args=>super.action(name,action,...args) }
+  // Passe converter data to store
+  #import(format:string,data:unknown):void                  { super.data = this.#convertData(this.#__from__[format],data) }
   // Return store data in the passed format if known  
-  #export(format:string)                              { return this.#convertData(this.#__to__[format], super.data) }
+  #export(format:string):unknown                            { return this.#convertData(this.#__to__[format],super.data) }
   // Return converted data if the converter exist  
-  #convertData(fn:Function, data:unknown)             { return fn?fn(data):"unknown format"  }
+  #convertData(fn:Function,data:unknown):unknown            { return fn?fn(data):"unknown format"  }
   // msg generator
-  #actionLog(res:unknown,action:string, id:string)    { return (res ? this.#successMsg : this.#errorMsg)(action, id,res) }
+  #actionLog(res:unknown,action:string,id:string):?unknown  { return (res ? this.#successMsg : this.#errorMsg)(action,id,res) }
   // Generate a success message
-  #successMsg(action:string, id:string, res:unknown)  { return action=='read' ? res : {msg: `Item id:${id || res} has been ${action}d`} }
+  #successMsg(action:string,id:string,res:unknown):unknown  { return action=='read' ? res : {msg: `Item id:${id || res} has been ${action}d`} }
   // Generate an error message
-  #errorMsg(action:string, id:string)                 { return {error: action=='read' ? undefined :`cannot ${action} item${id ? ' id:'+id : ''}`} }
+  #errorMsg(action:string,id:string):unknown|undefined      { return action=='read' ? null : {error: `cannot ${action} item${id ? ' id:'+id : ''}`} }
   
 }
