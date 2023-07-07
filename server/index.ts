@@ -21,7 +21,7 @@ app.use(async (ctx, next) => {
 // add routes
 const router = new Router();
 router.get("/api/export",  async (ctx) => { ctx.response.body = myApi.json });
-const myApi = new Api({router, path: 'api'})
+const myApi = new Api(router, 'api')
 router.get("/:path/:resource?/:id?",  async (ctx) => { ctx.response.body = await decoder.decode(data) });
 
 // After creating the router, we can add it to the app.
