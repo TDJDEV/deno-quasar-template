@@ -171,7 +171,7 @@ export class Store {
   // Public access to #action
   action(name:string,action:string,...args:any[]):unknown               { return this.#action(name,action,...args) }
   // // Public access to #get
-  // getCollection(name:string):?Collection                          { return this.#get(name) }
+  getCollection(name:string):Collection|null                            { return this.#get(name) }
   // Public access to #add
   setCollection(name:string,collection:Collection):Map<string,unknown>  { return this.#add(this.#__collections__,name,collection) }
 
@@ -180,7 +180,7 @@ export class Store {
   // Return requested data if found 
   #action(name:string,action:string,...args:any[]):unknown  { return this.#do(this.#get(name,action === "create"),action,args) }
   // Return collection or undefined
-  #get(name:string,create:boolean):?Collection              { return this.#addOrFind(this.#__collections__,name,create)?.get(name) }
+  #get(name:string,create:boolean):Collection|null          { return this.#addOrFind(this.#__collections__,name,create)?.get(name) }
   // Set or replace store data
   #init(data={}):Map                                        { return this.#setRecords() && this.#setCollections(data) }
   // Set or replace store collections map
@@ -190,7 +190,7 @@ export class Store {
   // Create a collection
   #create(name:string,data?:[]):Collection                  { return console.log(`Collection ${name} has been created`),new Collection(this.#__records__,name,{data}) }
   // Find a collection or add a new one
-  #addOrFind(db:Map,name:string,create:boolean):?Map        { return this.#find(db,name) || (create ? this.#add(db,name) : null) }
+  #addOrFind(db:Map,name:string,create:boolean):Map|null        { return this.#find(db,name) || (create ? this.#add(db,name) : null) }
   // Add a new collection to store map
   #add(db:Map,name:string,collection?:Collection):Map       { return db.set(name,collection||this.#create(name)) }
   // find a collection
@@ -283,10 +283,10 @@ export class Api extends Store {
   // Return converted data if the converter exist  
   #convertData(fn:Function,data:unknown):unknown              { return fn?fn(data):"unknown format"  }
   // msg generator
-  #actionLog(res:unknown,action:string,id:string):?unknown    { return (res ? this.#successMsg : this.#errorMsg)(action,id,res) }
+  #actionLog(res:unknown,action:string,id:string):unknown    { return (res ? this.#successMsg : this.#errorMsg)(action,id,res) }
   // Generate a success message
   #successMsg(action:string,id:string,res:unknown):unknown    { return action=='read' ? res : {msg: `Item id:${id || res} has been ${action}d`} }
   // Generate an error message
-  #errorMsg(action:string,id:string):?unknown                 { return action=='read' ? null : {error: `cannot ${action} item${id ? ' id:'+id : ''}`} }
+  #errorMsg(action:string,id:string):unknown                 { return action=='read' ? null : {error: `cannot ${action} item${id ? ' id:'+id : ''}`} }
   
 }
