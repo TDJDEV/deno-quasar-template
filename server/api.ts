@@ -3,7 +3,7 @@ class DataMap extends Map {
   #dataMaps
   constructor(parameters) {
     super(parameters)
-    this.#dataMaps=new Set([])
+    this.#dataMaps=new Set()
   }
 
   on(){}
