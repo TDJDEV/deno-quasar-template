@@ -213,13 +213,13 @@ export class Api extends Store {
 
     // Api routes
     router
-      .get(`/${path}export`,              this.#createMiddleware('export')) // Return db data in json string
-      .get(`/${path}collections`,         this.#createMiddleware('list'))   // Return collections list
-      .post(`/${path}:collection`,        this.#createMiddleware('create')) // Create record in a collection
-      .get(`/${path}:collection/:id?`,    this.#createMiddleware('read'))   // Return a record or a list of record (readOne || readMany)
-      .put(`/${path}:collection/:id`,     this.#createMiddleware('update')) // Replace a record data
-      .patch(`/${path}:collection/:id`,   this.#createMiddleware('patch'))  // Replace a record one or more attribute data
-      .delete(`/${path}:collection/:id`,  this.#createMiddleware('delete')) // Delete a record
+      .get(`/${path}export`,              this.#middleware('export')) // Return db data in json string
+      .get(`/${path}collections`,         this.#middleware('list'))   // Return collections list
+      .post(`/${path}:collection`,        this.#middleware('create')) // Create record in a collection
+      .get(`/${path}:collection/:id?`,    this.#middleware('read'))   // Return a record or a list of record (readOne || readMany)
+      .put(`/${path}:collection/:id`,     this.#middleware('update')) // Replace a record data
+      .patch(`/${path}:collection/:id`,   this.#middleware('patch'))  // Replace a record one or more attribute data
+      .delete(`/${path}:collection/:id`,  this.#middleware('delete')) // Delete a record
     
     // Convert data from Object to selected format
     this.#__from__={
@@ -258,13 +258,15 @@ export class Api extends Store {
   ******************/
 
   // Set response body
-  async #res(res:object,action:string, params:object):Promise<unknown>  { return res.body = await this.#action(action,this.#paramsHandler(action,params)) }
+  async #setRes(res:object,action:string, params:object):Promise<unknown>  { return res.body = await this.#action(action,this.#paramsHandler(action,params)) }
 
+
+  // Change response type to 404
   #notFound(next:Function)                                    { (ctx.response.type = 404), next() }  
   // Return api requests handler 
-  #createMiddleware(action:string):Promise<void>              { return async(ctx, next)=>{ (await this.#middlewareHandle(ctx)) || this.#notFound(next) } }
-  //
-  #middlewareHandle(ctx:object)                               { return this.#res(ctx.response,action,ctx.params) }
+  #middleware(action:string):Promise<void>                    { return async(ctx, next)=>{ (await this.#res(action,ctx)) || this.#notFound(next) } }
+  // handle api response
+  #res(action:string,ctx:object):Promise<unknown>             { return this.#setRes(ctx.response,action,ctx.params) }
   // Return an array of request parameters
   #paramsHandler(action:string,params:object):any[]           { return console.log(params),[params.collection,action==="create"?params.id:undefined] }
   // Handle api actions (body response)
@@ -282,10 +284,10 @@ export class Api extends Store {
   // Return converted data if the converter exist  
   #convertData(fn:Function,data:unknown):unknown              { return fn?fn(data):"unknown format"  }
   // msg generator
-  #actionLog(res:unknown,action:string,id:string):unknown    { return (res ? this.#successMsg : this.#errorMsg)(action,id,res) }
+  #actionLog(res:unknown,action:string,id:string):unknown     { return (res ? this.#successMsg : this.#errorMsg)(action,id,res) }
   // Generate a success message
   #successMsg(action:string,id:string,res:unknown):unknown    { return action=='read' ? res : {msg: `Item id:${id || res} has been ${action}d`} }
   // Generate an error message
-  #errorMsg(action:string,id:string):unknown                 { return action=='read' ? null : {error: `cannot ${action} item${id ? ' id:'+id : ''}`} }
+  #errorMsg(action:string,id:string):unknown                  { return action=='read' ? null : {error: `cannot ${action} item${id ? ' id:'+id : ''}`} }
   
 }
