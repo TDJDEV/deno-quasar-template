@@ -1,3 +1,4 @@
+// A MapObject that push it's data to all attached DataMap
 class DataMap extends Map {
   #dataMaps
   constructor(parameters) {
@@ -7,18 +8,21 @@ class DataMap extends Map {
 
   on(){}
   off(){}
-  attach(dataMap:DataMap):this { if(dataMap.isAttached(this) || dataMap === this) throw 'circular reference detected'; else return this.#dataMaps.add(dataMap), this; }
+  attach(dataMap:DataMap):this        { return (dataMap.isAttached(this) || dataMap === this) ? this.#error('circular reference detected') : this.#attachData(dataMap), this }
   isAttached(dataMap:DataMap):boolean { return this.#dataMaps.has(dataMap) || [...this.#dataMaps].some(deepDataMap=>deepDataMap.isAttached(dataMap)) }
 
-  set(key:any,value:any):this { if(this.#deepHas(key)) throw('this key is owned by a parent dataMap'); else return this.#deepSet(key,value) }
-  delete(key:any):boolean { return super.delete(key) && (this.#dataMaps.forEach(dataMap=>dataMap.delete(key)),true) }
+  set(key:any,value:any):this         { if(this.#deepHas(key)) throw('this key is owned by a parent dataMap'); else return this.#deepSet(key,value) }
+  delete(key:any):boolean             { return super.delete(key) && (this.#dataMaps.forEach(dataMap=>dataMap.delete(key)),true) }
   // check if current or parents map
-  deepHas(key:any):boolean { return super.has(key) || this.#dataMaps.size && [...this.#dataMaps].some(dataMap=>dataMap.deepHas(key)) }
+  deepHas(key:any):boolean            { return super.has(key) || this.#dataMaps.size && [...this.#dataMaps].some(dataMap=>dataMap.deepHas(key)) }
   // check if only parent map
-  #deepHas(key:any):boolean { return this.#dataMaps.size && !super.has(key) && [...this.#dataMaps].some(dataMap=>dataMap.deepHas(key)) }
+  #deepHas(key:any):boolean           { return this.#dataMaps.size && !super.has(key) && [...this.#dataMaps].some(dataMap=>dataMap.deepHas(key)) }
   // check if only parent map
   #deepSet(key:any,value:any):boolean { return this.#dataMaps.forEach(dataMap=>dataMap.set(key,value)), super.set(key,value) }
-  #attachData(dataMap:DataMap):void { if([...this.keys()].some(key => dataMap.deepHas(key))) throw new Error("duplicate key detected"); else this.forEach((data,key)=>{ dataMap.set(key,data) }) }
+  #attachData(dataMap:DataMap):void   { if(this.#hasKeys(dataMap)) this.#error("duplicate key detected"); else this.#merge(dataMap) }
+  #hasKeys(dataMap:DataMap):boolean   { return [...this.keys()].some(key => dataMap.deepHas(key))}
+  #merge(dataMap:DataMap):void        { this.#dataMaps.add(dataMap), this.forEach((data,key)=>{ dataMap.set(key,data)}) }
+  #error(msg:string):void             { throw new Error(msg) }
 }
 
 // Manage record's data
@@ -40,7 +44,7 @@ class Record {
 
     this.#__meta__ = { set attributes(val){} }
 		this.#setMeta(this.#parseMeta(data))
-		this.set(data.attributes)
+		this.set(data.attributes||{})
     console.log(this.#__meta__)
   }
 
@@ -53,7 +57,7 @@ class Record {
 
   /*  public methods  */
   // #set public accesses
-  set(data:object)    { this.#set(this.#isValid(data) && this.#parse(data),this.#__attributes__) }
+  set(data:object)    { return this.#set(this.#isValid(data) && this.#parse(data),!this.#__attributes__) }
   // #update public accesses
   update(data:object) { return this.#update(this.#isValid(data) && this.#parse(data)) }
 
@@ -98,10 +102,10 @@ class Collection{
   #__chars__
   #__i__
 
-  constructor(name,model,data){
+  constructor(Records:DataMap,name:string,{model,data}:{data:[],model?:{}}){
     this.#__name__ = name
-    this.#__dataModel__ = this.model || (Array.isArray(data)?data:[]).reduce(()=>"",{})
-    this.#__data__ = new Map(data?.map(x=>[x.id,new Record(x)]))
+    this.#__dataModel__ = model || (Array.isArray(data)?data:[]).reduce(()=>"",{})
+    this.#__data__ = new DataMap(data?.map(x=>[x.id,new Record(x)])).attach(Records)
     this.#__chars__ = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     this.#__i__ = 0
   }
@@ -116,7 +120,7 @@ class Collection{
 
   // crud
   create(data:unknown)            { return ((id:string)=>this.#add(this.#createRecord(this.#__name__,id,data)) )(crypto.randomUUID()) }
-  read(id:string,filters:any)    { return id ? this.#__data__?.get(id) : this.#filterHandler(this.#toArray(this.#__data__?.values()),filters) }
+  read(id:string,filters:any)     { return id ? this.#__data__?.get(id) : this.#filterHandler(this.#toArray(this.#__data__?.values()),filters) }
   update(id:string,data:unknown)  { return this.#__data__.get(id)?.set(data)}
   delete(id:string)               { return this.#__data__.delete(id)}
   patch(id:string,data:unknown)   { return this.#__data__.get(id)?.update(data)}
@@ -144,6 +148,7 @@ class Collection{
 // Manage collections
 export class Store {
   #__collections__
+  #__records__
 
   constructor(data) { this.#__collections__ = this.#init(data) }
 
@@ -164,30 +169,34 @@ export class Store {
   /* public */
   
   // Public access to #action
-  action(name:string,action:string,...args:any[])   { return this.#action(name,action,...args) }
-  // Public access to #get
-  getCollection(name:string)                          { return this.#get(name) }
+  action(name:string,action:string,...args:any[]):unknown               { return this.#action(name,action,...args) }
+  // // Public access to #get
+  // getCollection(name:string):?Collection                          { return this.#get(name) }
   // Public access to #add
-  setCollection(name:string,collection:Collection)   { return this.#add(this.#__collections__,name,collection) }
+  setCollection(name:string,collection:Collection):Map<string,unknown>  { return this.#add(this.#__collections__,name,collection) }
 
   /* private */
 
   // Return requested data if found 
-  #action(name:string,action:string,...args:any[])  { return this.#do(this.#get(name,action === "create"),action,args) }
+  #action(name:string,action:string,...args:any[]):unknown  { return this.#do(this.#get(name,action === "create"),action,args) }
   // Return collection or undefined
-  #get(name:string,create:boolean)                   { return this.#addOrFind(this.#__collections__,name,create)?.get(name) }
+  #get(name:string,create:boolean):?Collection              { return this.#addOrFind(this.#__collections__,name,create)?.get(name) }
   // Set or replace store data
-  #init(data={})                                      { return new Map(Object.entries(data).map((arr)=>this.#create(...arr))) }
+  #init(data={}):Map                                        { return this.#setRecords() && this.#setCollections(data) }
+  // Set or replace store collections map
+  #setCollections(data={}):Map                              { return new Map(Object.entries(data).map((arr)=>this.#create(...arr))) }
+  // Set or replace store record map
+  #setRecords():void                                        { return this.#__records__ = new DataMap }
   // Create a collection
-  #create(name:string,data?:[])                       { return console(`Collection ${name} has been created`),new Collection(name,data) }
+  #create(name:string,data?:[]):Collection                  { return console.log(`Collection ${name} has been created`),new Collection(this.#__records__,name,{data}) }
   // Find a collection or add a new one
-  #addOrFind(db:Map,name:string,create:boolean)     { return this.#find(db) || create ? this.#add(db,name) : null }
+  #addOrFind(db:Map,name:string,create:boolean):?Map        { return this.#find(db,name) || (create ? this.#add(db,name) : null) }
   // Add a new collection to store map
-  #add(db:Map,name:string,collection?:Collection)   { return db.set(name,collection||this.#create(name)) }
+  #add(db:Map,name:string,collection?:Collection):Map       { return db.set(name,collection||this.#create(name)) }
   // find a collection
-  #find(db:Map)                                       { return db.has(name) && db }
+  #find(db:Map, name:string):Map|false                      { return db.has(name) && db }
   // Execute the passed action*
-  #do(table:Collection,action,args:any[])           { return table && table[action] && table[action](...args) }
+  #do(table:Collection,action,args:any[]):unknown           { return table && table[action] && table[action](...args) }
 }
 
 // Store additionnal functionnalities (api routes,data import and export,etc...)
@@ -204,14 +213,14 @@ export class Api extends Store {
 
     // Api routes
     router
-      .get(`/${path}export`,              this.#middleware('export')) // Return db data in json string
-      .get(`/${path}collections`,         this.#middleware('list'))   // Return collections list
-      .post(`/${path}:collection`,        this.#middleware('create')) // Create record in a collection
-      .get(`/${path}:collection/:id?`,    this.#middleware('read'))   // Return a record or a list of record (readOne || readMany)
-      .put(`/${path}:collection/:id`,     this.#middleware('update')) // Replace a record data
-      .patch(`/${path}:collection/:id`,   this.#middleware('patch'))  // Replace a record one or more attribute data
-      .delete(`/${path}:collection/:id`,  this.#middleware('delete')) // Delete a record
-      .get(`/${path}/*`,                  async (ctx,next) => { (ctx.response.type = 404) || next }) // 
+      .get(`/${path}export`,              this.#createMiddleware('export')) // Return db data in json string
+      .get(`/${path}collections`,         this.#createMiddleware('list'))   // Return collections list
+      .post(`/${path}:collection`,        this.#createMiddleware('create')) // Create record in a collection
+      .get(`/${path}:collection/:id?`,    this.#createMiddleware('read'))   // Return a record or a list of record (readOne || readMany)
+      .put(`/${path}:collection/:id`,     this.#createMiddleware('update')) // Replace a record data
+      .patch(`/${path}:collection/:id`,   this.#createMiddleware('patch'))  // Replace a record one or more attribute data
+      .delete(`/${path}:collection/:id`,  this.#createMiddleware('delete')) // Delete a record
+      .get(`/${path}/*`,                  async (ctx,next) => { (ctx.response.type = 404) || next() }) // 
     
     // Convert data from Object to selected format
     this.#__from__={
@@ -250,32 +259,34 @@ export class Api extends Store {
   ******************/
 
   // Set response body
-  async #res(res:object,action:string, params:object):Promise<unknown> { return res.body = await this.#action(action,this.#paramsHandler(action,params)) }
+  async #res(res:object,action:string, params:object):Promise<unknown>  { return res.body = await this.#action(action,this.#paramsHandler(action,params)) }
 
   
   // Return api requests handler 
-  #middleware(action:string):Promise<void>                  { return async(ctx, next)=>{ await this.#res(ctx.response,action,ctx.params) || next() } }
+  #createMiddleware(action:string):Promise<void>              { return async(ctx, next)=>{ (await this.#middlewareHandle(ctx)) || next() } }
+  //
+  #middlewareHandle(ctx:object)                               { return this.#res(ctx.response,action,ctx.params) }
   // Return an array of request parameters
-  #paramsHandler(action:string,params:object):unknown[]     { return console.log(params),[params.collection,action==="create"?ctx.params.id:undefined] }
+  #paramsHandler(action:string,params:object):any[]           { return console.log(params),[params.collection,action==="create"?params.id:undefined] }
   // Handle api actions (body response)
-  #action(action:string,name:string,...args:any[]):unknown  { return this.#actionLog(this.#handler(action,name)(...args),action,...args) }
+  #action(action:string,args:any[]):unknown                   { return this.#actionLog(this.#handler(action,args.shift())(args),action,...args) }
   // Return an object store data in the passed format if known
-  #handler(action:string,name:string):unknown               { return this.#apiAction(action) || this.#storeAction(action,name) }
-  // return api action handler*
-  #apiAction(action:string):unknown                         { return this.#__fn__.has(action) && this.#__fn__.get(action) }
-  // return store action handler
-  #storeAction(action:string,name:string):unknown           { return args=>super.action(name,action,...args) }
+  #handler(action:string,name:string):unknown                 { return this.#apiAction(action) || this.#storeAction(action,name) }
+  // return Api action handler
+  #apiAction(action:string):unknown                           { return this.#__fn__.has(action) && this.#__fn__.get(action) }
+  // return Store action handler
+  #storeAction(action:string,name:string,args:any[]):unknown  { return args=>super.action(name,action,...args) }
   // Passe converter data to store
-  #import(format:string,data:unknown):void                  { super.data = this.#convertData(this.#__from__[format],data) }
+  #import(format:string,data:unknown):void                    { super.data = this.#convertData(this.#__from__[format],data) }
   // Return store data in the passed format if known  
-  #export(format:string):unknown                            { return this.#convertData(this.#__to__[format],super.data) }
+  #export(format:string):unknown                              { return this.#convertData(this.#__to__[format],super.data) }
   // Return converted data if the converter exist  
-  #convertData(fn:Function,data:unknown):unknown            { return fn?fn(data):"unknown format"  }
+  #convertData(fn:Function,data:unknown):unknown              { return fn?fn(data):"unknown format"  }
   // msg generator
-  #actionLog(res:unknown,action:string,id:string):?unknown  { return (res ? this.#successMsg : this.#errorMsg)(action,id,res) }
+  #actionLog(res:unknown,action:string,id:string):?unknown    { return (res ? this.#successMsg : this.#errorMsg)(action,id,res) }
   // Generate a success message
-  #successMsg(action:string,id:string,res:unknown):unknown  { return action=='read' ? res : {msg: `Item id:${id || res} has been ${action}d`} }
+  #successMsg(action:string,id:string,res:unknown):unknown    { return action=='read' ? res : {msg: `Item id:${id || res} has been ${action}d`} }
   // Generate an error message
-  #errorMsg(action:string,id:string):unknown|undefined      { return action=='read' ? null : {error: `cannot ${action} item${id ? ' id:'+id : ''}`} }
+  #errorMsg(action:string,id:string):?unknown                 { return action=='read' ? null : {error: `cannot ${action} item${id ? ' id:'+id : ''}`} }
   
 }
