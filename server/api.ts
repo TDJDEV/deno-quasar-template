@@ -220,7 +220,6 @@ export class Api extends Store {
       .put(`/${path}:collection/:id`,     this.#createMiddleware('update')) // Replace a record data
       .patch(`/${path}:collection/:id`,   this.#createMiddleware('patch'))  // Replace a record one or more attribute data
       .delete(`/${path}:collection/:id`,  this.#createMiddleware('delete')) // Delete a record
-      .get(`/${path}/*`,                  async (ctx,next) => { (ctx.response.type = 404) || next() }) // 
     
     // Convert data from Object to selected format
     this.#__from__={
@@ -261,9 +260,9 @@ export class Api extends Store {
   // Set response body
   async #res(res:object,action:string, params:object):Promise<unknown>  { return res.body = await this.#action(action,this.#paramsHandler(action,params)) }
 
-  
+  #notFound(next:Function)                                    { (ctx.response.type = 404), next() }  
   // Return api requests handler 
-  #createMiddleware(action:string):Promise<void>              { return async(ctx, next)=>{ (await this.#middlewareHandle(ctx)) || next() } }
+  #createMiddleware(action:string):Promise<void>              { return async(ctx, next)=>{ (await this.#middlewareHandle(ctx)) || this.#notFound(next) } }
   //
   #middlewareHandle(ctx:object)                               { return this.#res(ctx.response,action,ctx.params) }
   // Return an array of request parameters
