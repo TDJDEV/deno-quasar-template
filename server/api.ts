@@ -23,6 +23,8 @@ class DataMap extends Map {
   #hasKeys(dataMap:DataMap):boolean   { return [...this.keys()].some(key => dataMap.deepHas(key))}
   #merge(dataMap:DataMap):void        { this.#dataMaps.add(dataMap), this.forEach((data,key)=>{ dataMap.set(key,data)}) }
   #error(msg:string):void             { throw new Error(msg) }
+  
+  toJSON():any  { return Object.fromEntries(this.entries()) }
 }
 
 // Manage record's data
@@ -45,7 +47,7 @@ class Record {
     this.#__meta__ = { set attributes(val){} }
 		this.#setMeta(this.#parseMeta(data))
 		this.set(data.attributes||{})
-    console.log(this.#__meta__)
+    console.log("new Record => ",this)
   }
 
   // getters
@@ -91,7 +93,7 @@ class Record {
   #update(data:object):boolean                            { return data && !!Object.assign(this.#__attributes__ ,this.#cloneData(data))}  
 
   // Set JSONable structure
-  toJSON(){ return Object.values(this.#__dataModel__).reduce((acc,key) => ((acc[key]=this[key]),acc),{})  }
+  toJSON():object { return Object.values(this.#__dataModel__).reduce((acc,key) => ((acc[key]=this[key]),acc),{})  }
 }
 
 // Manage records and define it's data structure 
@@ -108,6 +110,7 @@ class Collection{
     this.#__data__ = new DataMap(data?.map(x=>[x.id,new Record(x)])).attach(Records)
     this.#__chars__ = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     this.#__i__ = 0
+    console.log(`Collection ${name} has been created`)
   }
 
   get name() { return this.#__name__ }
@@ -188,7 +191,7 @@ export class Store {
   // Set or replace store record map
   #setRecords():void                                        { return this.#__records__ = new DataMap }
   // Create a collection
-  #create(name:string,data?:[]):Collection                  { return console.log(`Collection ${name} has been created`),new Collection(this.#__records__,name,{data}) }
+  #create(name:string,data?:[]):Collection                  { return new Collection(this.#__records__,name,{data}) }
   // Find a collection or add a new one
   #addOrFind(db:Map,name:string,create:boolean):Map|null    { return this.#find(db,name) || (create ? this.#add(db,name) : null) }
   // Add a new collection to store map
