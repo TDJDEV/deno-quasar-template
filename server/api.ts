@@ -47,13 +47,14 @@ class Record {
     this.#__meta__ = { set attributes(val){} }
 		this.#setMeta(this.#parseMeta(data))
 		this.set(data.attributes||{})
-    console.log("new Record => ",this)
+    // console.log("Record => ", JSON.parse(this))
+    console.log(`Record ${this.id} has been created`)
   }
 
   // getters
   get id()            { return this.#__meta__.id }
   get collection()    { return this.#__meta__.collection }
-  get creationDate()  { return this.#__meta__.createAt }
+  get creationDate()  { return this.#__meta__.createdAt }
   get lastUpdate()    { return this.#__meta__.updatedAt }
   get attributes()    { return {...this.#__attributes__} }
 
@@ -76,15 +77,13 @@ class Record {
   // Add data to record meta data
   #addMeta(o:object,[name,label]:string[],data:object)    { return (o[name]=data[label]),o }
   // add authorized attributes
-  #check(o:object,[key,type]:[string,string],data:object) { return ((val:unknown) => this.#checkDataType(val,type) && (o[key]=val))(data[key]),o }
+  #check(o:object,[key,type]:[string,string],data:object) { return ((val:unknown) => [type].includes(typeof val) && (o[key]=val))(data[key]),o }
   //Clone data deeply
   #cloneData(data:object)                                 { return JSON.parse(JSON.stringify(data||{})) }
   // Set mutation date
   #setDate(isNew:boolean)                                 { return this.#__meta__[isNew ? 'createdAt' : 'updatedAt'] = new Date().toISOString() }
   // Reduce callback supercharger
   #reducer(fn:Function,...datas:unknown[])                { return (acc:any,it:unknown)=>fn(acc,it,...datas) }
-  // check attribute data type
-  #checkDataType(val,type)                                { return [type,typeof type].includes(typeof val) }
   // check if passed data is an object
   #isValid(data:object={}): boolean                       { return typeof data === "object" && !Array.isArray(data) }
   // Browse object and return accumulator if passed
@@ -209,13 +208,14 @@ export class Api extends Store {
   #__fn__
 
   constructor(router:object,path?:string="") {
-    super()
+    super(),
 
     // check params
-    "/" !== path.slice(-1) && (path+="/"); 
+    (path && typeof path === 'string') ? "/" !== path.slice(-1) && (path+="/") : (path=""); 
 
     // Api routes
     router
+      .all(`/${path}:collection?/:id?`,   this.#parseRequest()) // Return db data in json string
       .get(`/${path}export`,              this.#middleware('export')) // Return db data in json string
       .get(`/${path}collections`,         this.#middleware('list'))   // Return collections list
       .post(`/${path}:collection`,        this.#middleware('create')) // Create record in a collection
@@ -262,20 +262,25 @@ export class Api extends Store {
 
   // Set response body
   async #setRes(res:object,action:string, params:object):Promise<unknown> { return res.body = await this.#action(action,this.#paramsHandler(action,params)) }
-  async #getParams({params, request:req})                                 { return { ...params, body: this.#getBody(req) || null } }
-  async #getBody({url, body, hasBody})                                    { return this.#check(url.searchParams) || hasBody && this.#check(await body()?.value) }
+  // Return actions required data
+  async #getParams({params, request:req})                                 { return { ...params, body: await this.#getBody(req) || null } }
+  // Return query or body parameters
+  async #getBody(req)                                                     { return this.#check(req.hasBody ? await req.body().value : req.url.searchParams) }
   
+  
+  // Fech request parameters
+  #parseRequest(ctx,next)                                     { return async(ctx,next)=>((ctx.apiParams = await this.#getParams(ctx)), next()) }
   // 
-  #check(params)                                              { return (params = this.#parse(params)) && Object.keys(params).length && params }
-  // 
+  #check(params)                                              { return (params = this.#parse(params)) && Object.keys(params).length ? params : null }
+  // Convert request parameters to object
   #parse(params)                                              { return params && Object.fromEntries(params)}
   // Change response type to 404
   #notFound(ctx:object,next:Function):void                    { (ctx.response.type = 404), next() }  
   // Return api requests handler 
   #middleware(action:string):Promise<void>                    { return async(ctx, next)=>{ (await this.#res(action,ctx)) || this.#notFound(ctx,next) } }
   // handle api response
-  #res(action:string,ctx:object):Promise<unknown>             { return this.#setRes(ctx.response,action, this.#getParams(ctx)) }
-  // Return an array of request parameters
+  #res(action:string,ctx:object):Promise<unknown>             { return this.#setRes(ctx.response,action, ctx.apiParams) }
+  // Convert action required data to an array parameters
   #paramsHandler(action:string,params:object):any[]           { return [params.collection,...action!="create"?[params.id]:[],...action!="read"?[params.body]:[]] }
   // Handle api actions (body response)
   #action(action:string,args:any[]):unknown                   { return this.#actionLog(this.#handler(action,args.shift())(args),action,...args) }
@@ -292,7 +297,7 @@ export class Api extends Store {
   // Return converted data if the converter exist  
   #convertData(fn:Function,data:unknown):unknown              { return fn?fn(data):"unknown format"  }
   // msg generator
-  #actionLog(res:unknown,action:string,id:string):unknown     { return (res ? this.#successMsg : this.#errorMsg)(action,id,res) }
+  #actionLog(res:unknown,action:string,id:string):unknown     { return (res ? this.#successMsg : this.#errorMsg)(action,action!=="create"&&id,res) }
   // Generate a success message
   #successMsg(action:string,id:string,res:unknown):unknown    { return action=='read' ? res : {msg: `Item id:${id || res} has been ${action}d`} }
   // Generate an error message
