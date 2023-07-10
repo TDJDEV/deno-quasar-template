@@ -261,36 +261,41 @@ export class Api extends Store {
   ******************/
 
   // Set response body
-  async #setRes(res:object,action:string, params:object):Promise<unknown>  { return res.body = await this.#action(action,this.#paramsHandler(action,params)) }
-
-
+  async #setRes(res:object,action:string, params:object):Promise<unknown> { return res.body = await this.#action(action,this.#paramsHandler(action,params)) }
+  async #getParams(params, req)                                           { return { ...params, body: this.#getBody(req) || null } }
+  async #getBody({url, body})                                             { return this.#check(url.searchParams) || this.#check(await body()?.value) }
+  
+  // 
+  #check(params)                                              { return (params = this.#parse(params)) && Object.keys(params).length && params }
+  // 
+  #parse(params)                                              { return params && Object.fromEntries(params)}
   // Change response type to 404
-  #notFound(ctx:object,next:Function):void                      { (ctx.response.type = 404), next() }  
+  #notFound(ctx:object,next:Function):void                    { (ctx.response.type = 404), next() }  
   // Return api requests handler 
-  #middleware(action:string):Promise<void>                      { return async(ctx, next)=>{ (await this.#res(action,ctx)) || this.#notFound(ctx,next) } }
+  #middleware(action:string):Promise<void>                    { return async(ctx, next)=>{ (await this.#res(action,ctx)) || this.#notFound(ctx,next) } }
   // handle api response
-  #res(action:string,ctx:object):Promise<unknown>               { return this.#setRes(ctx.response,action,ctx.params) }
+  #res(action:string,ctx:object):Promise<unknown>             { return this.#setRes(ctx.response,action, this.#getParams(ctx.request)) }
   // Return an array of request parameters
-  #paramsHandler(action:string,params:object,body:object):any[] { return [params.collection,...action!=="create"? [params.id]: [], ...action!=="read"? [body]: []] }
+  #paramsHandler(action:string,params:object):any[]           { return [params.collection,...action!="create"?[params.id]:[],...action!="read"?[params.body]:[]] }
   // Handle api actions (body response)
-  #action(action:string,args:any[]):unknown                     { return this.#actionLog(this.#handler(action,args.shift())(args),action,...args) }
+  #action(action:string,args:any[]):unknown                   { return this.#actionLog(this.#handler(action,args.shift())(args),action,...args) }
   // Return an object store data in the passed format if known
-  #handler(action:string,name:string):unknown                   { return this.#apiAction(action) || this.#storeAction(action,name) }
+  #handler(action:string,name:string):unknown                 { return this.#apiAction(action) || this.#storeAction(action,name) }
   // return Api action handler
-  #apiAction(action:string):unknown                             { return this.#__fn__.has(action) && this.#__fn__.get(action) }
+  #apiAction(action:string):unknown                           { return this.#__fn__.has(action) && this.#__fn__.get(action) }
   // return Store action handler
-  #storeAction(action:string,name:string,args:any[]):unknown    { return args=>super.action(name,action,...args) }
+  #storeAction(action:string,name:string,args:any[]):unknown  { return args=>super.action(name,action,...args) }
   // Passe converter data to store
-  #import(format:string,data:unknown):void                      { super.data = this.#convertData(this.#__from__[format],data) }
+  #import(format:string,data:unknown):void                    { super.data = this.#convertData(this.#__from__[format],data) }
   // Return store data in the passed format if known  
-  #export(format:string):unknown                                { return this.#convertData(this.#__to__[format],super.data) }
+  #export(format:string):unknown                              { return this.#convertData(this.#__to__[format],super.data) }
   // Return converted data if the converter exist  
-  #convertData(fn:Function,data:unknown):unknown                { return fn?fn(data):"unknown format"  }
+  #convertData(fn:Function,data:unknown):unknown              { return fn?fn(data):"unknown format"  }
   // msg generator
-  #actionLog(res:unknown,action:string,id:string):unknown       { return (res ? this.#successMsg : this.#errorMsg)(action,id,res) }
+  #actionLog(res:unknown,action:string,id:string):unknown     { return (res ? this.#successMsg : this.#errorMsg)(action,id,res) }
   // Generate a success message
-  #successMsg(action:string,id:string,res:unknown):unknown      { return action=='read' ? res : {msg: `Item id:${id || res} has been ${action}d`} }
+  #successMsg(action:string,id:string,res:unknown):unknown    { return action=='read' ? res : {msg: `Item id:${id || res} has been ${action}d`} }
   // Generate an error message
-  #errorMsg(action:string,id:string):unknown                    { return action=='read' ? null : {error: `cannot ${action} item${id ? ' id:'+id : ''}`} }
+  #errorMsg(action:string,id:string):unknown                  { return action=='read' ? null : {error: `cannot ${action} item${id ? ' id:'+id : ''}`} }
   
 }
