@@ -262,7 +262,7 @@ export class Api extends Store {
 
   // Set response body
   async #setRes(res:object,action:string, params:object):Promise<unknown> { return res.body = await this.#action(action,this.#paramsHandler(action,params)) }
-  async #getParams(params, req)                                           { return { ...params, body: this.#getBody(req) || null } }
+  async #getParams({params, req})                                           { return { ...params, body: this.#getBody(req) || null } }
   async #getBody({url, body})                                             { return this.#check(url.searchParams) || this.#check(await body()?.value) }
   
   // 
@@ -274,7 +274,7 @@ export class Api extends Store {
   // Return api requests handler 
   #middleware(action:string):Promise<void>                    { return async(ctx, next)=>{ (await this.#res(action,ctx)) || this.#notFound(ctx,next) } }
   // handle api response
-  #res(action:string,ctx:object):Promise<unknown>             { return this.#setRes(ctx.response,action, this.#getParams(ctx.request)) }
+  #res(action:string,ctx:object):Promise<unknown>             { return this.#setRes(ctx.response,action, this.#getParams(ctx)) }
   // Return an array of request parameters
   #paramsHandler(action:string,params:object):any[]           { return [params.collection,...action!="create"?[params.id]:[],...action!="read"?[params.body]:[]] }
   // Handle api actions (body response)
