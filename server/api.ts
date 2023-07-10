@@ -262,7 +262,7 @@ export class Api extends Store {
 
   // Set response body
   async #setRes(res:object,action:string, params:object):Promise<unknown> { return res.body = await this.#action(action,this.#paramsHandler(action,params)) }
-  async #getParams({params, req})                                           { return { ...params, body: this.#getBody(req) || null } }
+  async #getParams({params, request:req})                                 { return { ...params, body: this.#getBody(req) || null } }
   async #getBody({url, body})                                             { return this.#check(url.searchParams) || this.#check(await body()?.value) }
   
   // 
