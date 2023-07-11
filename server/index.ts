@@ -1,6 +1,6 @@
 // Imports
 import { Application, Router } from "https://deno.land/x/oak@v10.2.0/mod.ts";
-import { Api } from "./api.ts";
+import { Api } from "./api/index.ts";
 
 
 // Constants
