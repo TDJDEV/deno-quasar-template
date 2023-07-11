@@ -25,5 +25,5 @@ jobs:
         uses: denoland/deployctl@v1
         with:
           project: "soft-bobcat-75"
-          entrypoint: "index.js" # 📝 Update the entrypoint
+          entrypoint: "server/index.ts"  # 📝 Update the entrypoint
           root: "." # 📝 Update the root
