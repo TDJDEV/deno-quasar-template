@@ -26,4 +26,4 @@ jobs:
         with:
           project: "soft-bobcat-75"
           entrypoint: "server/index.ts"  # 📝 Update the entrypoint
-          root: "." # 📝 Update the root
+          root: "" # 📝 Update the root
