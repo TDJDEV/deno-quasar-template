@@ -1,4 +1,4 @@
-import { Store } from './store'
-import { Api } from './api'
+import { Store } from './store.ts'
+import { Api } from './api.ts'
 
 export default { Store, Api }

@@ -1,4 +1,4 @@
-import { Store } from './store'
+import { Store } from './store.ts'
 
 // Store additionnal functionnalities (api routes,data import and export,etc...)
 export class Api extends Store {
