@@ -6,8 +6,8 @@ on:
     branches: main
 
 jobs:
-  deploy:
-    name: Deploy
+  prod:
+    name: production
     runs-on: ubuntu-latest
     permissions:
       id-token: write # Needed for auth with Deno Deploy
@@ -25,6 +25,28 @@ jobs:
         uses: denoland/deployctl@v1
         with:
           project: "near-ant-35"
+#           entrypoint: "https://deno.land/std@0.188.0/http/file_server.ts" # 📝 Update the entrypoint
+          entrypoint: "server/index.ts" # 📝 Update the entrypoint
+          root: ""
+  dev:
+    name: develop
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # Needed for auth with Deno Deploy
+      contents: read # Needed to clone the repository
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v3
+      - name: Setup Deno
+        uses: denoland/setup-deno@v1.1.2
+      - name: Build step
+        run: deno task build # 📝 Update the build command(s)
+
+      - name: Upload to Deno Deploy
+        uses: denoland/deployctl@v1
+        with:
+          project: "soft-bobcat-75"
 #           entrypoint: "https://deno.land/std@0.188.0/http/file_server.ts" # 📝 Update the entrypoint
           entrypoint: "server/index.ts" # 📝 Update the entrypoint
           root: ""
