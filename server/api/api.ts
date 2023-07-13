@@ -60,7 +60,9 @@ export class Api extends Store {
   ******************/
 
   // Set response body
-  async #setRes(res:object,action:string, params:object):Promise<unknown> { return res.body = await this.#action(action,this.#paramsHandler(action,params)) }
+  // async #setRes(res:object,action:string, params:object):Promise<unknown> { return res.body = await this.#action(action,this.#paramsHandler(action,params)) }
+  // Set response body
+  async #setRes(res:object,action:string, params:object):Promise<unknown> { return console.log(await this.#action(action,this.#paramsHandler(action,params))) }
   // Return actions required data
   async #getParams({params, request:req})                                 { return { ...params, body: await this.#getBody(req) || null } }
   // Return query or body parameters
