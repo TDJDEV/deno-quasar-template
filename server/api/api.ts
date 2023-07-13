@@ -78,7 +78,7 @@ export class Api extends Store {
   // Convert request parameters to object
   #parse(params)                                              { return params && Object.fromEntries(params)}
   // Change response type to 404
-  #notFound(ctx:object,next:Function):void                    { (ctx.response.status = 404), next() }  
+  #notFound(ctx:object,next:Function):void                    { await next(), (ctx.response.status = 404) }  
   // Return api requests handler 
   #middleware(action:string):Promise<void>                    { return async(ctx, next)=>{ (await this.#res(action,ctx)) || this.#notFound(ctx,next) } }
   // Convert action required data to an array parameters
