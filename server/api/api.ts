@@ -61,14 +61,16 @@ export class Api extends Store {
 
   // Set response body
   // async #setRes(res:object,action:string, params:object):Promise<unknown> { return res.body = await this.#action(action,this.#paramsHandler(action,params)) }
-  // Set response body
-  async #setRes(res:object,action:string, params:object):Promise<unknown> { return console.log(await this.#action(action,this.#paramsHandler(action,params))) }
   // Return actions required data
-  async #getParams({params, request:req})                                 { return { ...params, body: await this.#getBody(req) || null } }
+  async #getParams({params, request:req})               { return { ...params, body: await this.#getBody(req) || null } }
   // Return query or body parameters
-  async #getBody(req)                                                     { return this.#check(req.hasBody ? await req.body().value : req.url.searchParams) }
+  async #getBody(req)                                   { return this.#check(req.hasBody ? await req.body().value : req.url.searchParams) }
+  // handle api response
+  async #res(action:string,ctx:object):Promise<unknown> { return this.#setRes(ctx, await this.#action(action,this.#paramsHandler(action,ctx.apiParams))) }
   
   
+  // Set response body
+  #setRes(ctx:object,res:unknown):unknown                     { return console.log(res), res }
   // Fech request parameters
   #parseRequest(ctx,next)                                     { return async(ctx,next)=>((ctx.apiParams = await this.#getParams(ctx)), next()) }
   // 
@@ -79,8 +81,6 @@ export class Api extends Store {
   #notFound(ctx:object,next:Function):void                    { (ctx.response.type = 404), next() }  
   // Return api requests handler 
   #middleware(action:string):Promise<void>                    { return async(ctx, next)=>{ (await this.#res(action,ctx)) || this.#notFound(ctx,next) } }
-  // handle api response
-  #res(action:string,ctx:object):Promise<unknown>             { return this.#setRes(ctx.response,action, ctx.apiParams) }
   // Convert action required data to an array parameters
   #paramsHandler(action:string,params:object):any[]           { return [params.collection,...action!="create"?[params.id]:[],...action!="read"?[params.body]:[]] }
   // Handle api actions (body response)
